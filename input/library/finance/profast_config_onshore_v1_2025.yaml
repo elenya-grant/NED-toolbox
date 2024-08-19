@@ -1,0 +1,98 @@
+
+params:
+  commodity:
+    initial price: 100.0 #same
+    name: 'Hydrogen'
+    unit: 'kg'
+    escalation: 0.0
+  capacity: 1 #units/day - nameplate capacity
+  long term utilization: 1 #capacity factor
+  analysis start year: 2027 #same: 2+2030 atb year (or 1+atb_year?)
+  operating life: 30 #same
+  installation months: 36 #same
+  demand rampup: 0 #same
+  capital gains tax rate: 0.15 #same
+  total income tax rate: 0.2574 #same
+  leverage after tax nominal discount rate: 0.0948 #discount rate 0.0948
+  debt equity ratio of initial financing: 1.72 #???double check (1.72) 1.72/(100-1.72)
+  debt interest rate: 0.046 #0.050049 #same
+  debt type: "Revolving debt"
+  property tax and insurance: 0.015 #same
+  general inflation rate: 0.0 #same
+  cash onhand: 1 #3
+  TOPC:
+    unit price: 0.0
+    decay: 0.0
+    support utilization: 0.0
+    sunset years: 0
+  annual operating incentive:
+    value: 0.0
+    decay: 0.0
+    sunset years: 0
+    taxable: true
+  incidental revenue:
+    value: 0.0
+    escalation: 0.0
+  credit card fees: 0.0 #same
+  sales tax: 0.0 #same
+  road tax:
+    value: 0.0
+    escalation: 0.0
+  labor:
+    value: 0.0
+    rate: 0.0
+    escalation: 0.0
+  maintenance: #same
+    value: 0.0
+    escalation: 0.0
+  rent: #same
+    value: 0.0
+    escalation: 0.0
+  license and permit: #same
+    value: 0.0
+    escalation: 0.0
+  non depr assets: 250000 #depends on land cost
+  end of proj sale non depr assets: 250000 #depends on land cost
+  installation cost: #same
+    value: 0.0
+    depr type: "Straight line"
+    depr period: 4
+    depreciable: False
+  one time cap inct: #like an ITC
+    value: 0.0
+    depr type: "MACRS"
+    depr period: 3
+    depreciable: False
+  admin expense: 0.0 #same
+  tax loss carry forward years: 0
+  tax losses monetized: True #same
+  sell undepreciated cap: True #same
+  loan period if used: 0 #same
+# capital_items:
+#   Electrolysis System:
+#     cost: 
+#     depr_type:
+#     depr_period:
+#     refurb:
+
+# fixed_costs:
+#   Solar Plant Fixed O&M Cost:
+#     usage: 1.0
+#     unit: "$/year"
+#     cost:
+#     escalation: 
+
+# feedstocks:
+#   Water:
+#     usage: 2.64 #unit of water/per unit of product
+#     unit: "gal"
+#     cost: "US Average" #feedstock region from ProFAST or $/unit
+#     escalation: 0.0
+
+# incentives:
+#   example:
+#     name: "Example PTC"
+#     value: #[$/kW]
+#     decay: #-1*gen_infcation
+#     sunset_years: 10
+#     tax_credit: True
