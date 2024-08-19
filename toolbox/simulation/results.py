@@ -45,6 +45,15 @@ class LCOHResults(FromDictMixin):
     def get_lcoh_summary(self):
         d = self.as_dict()
         summary = {k:v for k,v in d.items() if k!="lcoh_pf"}
+        summary = {k:v for k,v in summary.items() if k!="lcoh_pf_config"}
+        summary = {k:v for k,v in summary.items() if k!="lcoh_cost_breakdown"}
+        return summary
+
+    def get_lcoh_detailed_results(self):
+        d = self.as_dict()
+        summary = {k:v for k,v in d.items() if k!="lcoh_pf"}
+        # detailed_keys = ["lcoh_pf_config","lcoh_cost_breakdown"]
+        # summary = {k:v for k,v in d.items() if k in detailed_keys}
         return summary
 
     def update_re_plant_type(self,re_plant_type:str):
@@ -85,8 +94,17 @@ class LCOEResults(FromDictMixin):
     def get_lcoe_summary(self):
         d = self.as_dict()
         summary = {k:v for k,v in d.items() if k!="lcoe_pf"}
+        summary = {k:v for k,v in summary.items() if k!="lcoe_pf_config"}
+        summary = {k:v for k,v in summary.items() if k!="lcoe_cost_breakdown"}
         return summary
     
+    def get_lcoe_detailed_results(self):
+        d = self.as_dict()
+        summary = {k:v for k,v in d.items() if k!="lcoe_pf"}
+        # detailed_keys = ["lcoe_pf_config","lcoe_cost_breakdown"]
+        # summary = {k:v for k,v in d.items() if k in detailed_keys}
+        return summary
+
     def update_re_plant_type(self,re_plant_type:str):
         self.re_plant_type = re_plant_type
 
@@ -191,7 +209,15 @@ class PhysicsResults(FromDictMixin):
         d = self.as_dict()
         summary = {k:v for k,v in d.items() if k!="hopp_results"}
         summary = {k:v for k,v in summary.items() if k!="electrolyzer_physics_results"}
+        summary = {k:v for k,v in summary.items() if k!="timeseries"}
         return summary
+
+    def get_physics_timeseries(self):
+        d = self.as_dict()
+        ts_keys = ["timeseries","renewable_plant_design_type","re_plant_type","h2_storage_type","h2_transport_type"]
+        summary = {k:v for k,v in d.items() if k in ts_keys}
+        return summary
+        
         # if self.h2_transport_pipe_results is not None:
         #     h2_storage_transport_design_type = ""
         #     if isinstance(self.h2_transport_pipe_results,pd.DataFrame):
@@ -275,11 +301,23 @@ class NedOutputs(BaseClassNed):
     def make_Finance_summary_results(self):
         temp = [pd.Series(self.Finance_Res[i].get_finance_summary()) for i in range(len(self.Finance_Res))]
         return pd.DataFrame(temp)
-        
-    def write_outputs(self,output_dir:str,save_separately = False):
+    
+    def make_LCOH_detailed_results(self):
+        temp = [pd.Series(self.LCOH_Res[i].get_lcoh_detailed_results()) for i in range(len(self.LCOH_Res))]
+        return pd.DataFrame(temp)
+
+    def make_LCOE_detailed_results(self):
+        temp = [pd.Series(self.LCOE_Res[i].get_lcoe_detailed_results()) for i in range(len(self.LCOE_Res))]
+        return pd.DataFrame(temp)
+    
+    def make_Physics_detailed_results(self):
+        temp = [pd.Series(self.Physics_Res[i].get_physics_timeseries()) for i in range(len(self.Physics_Res))]
+        return pd.DataFrame(temp)
+
+    def write_output_summary(self,output_dir:str,save_separately = False):
         # self.saved_num +=1
         # output_filepath_root = os.path.join(output_dir,"{}-{}_{}-{}-{}_{}".format(self.site.id,self.site.latitude,self.site.longitude,self.site.state,self.site.county,self.extra_desc))
-        output_filepath_root = os.path.join(output_dir,"{}-{}_{}-{}_{}_{}".format(self.site.id,self.site.latitude,self.site.longitude,self.site.state.replace(" ",""),self.atb_year,self.extra_desc))
+        output_filepath_root = os.path.join(output_dir,"{}-{}_{}-{}-{}-{}".format(self.site.id,self.site.latitude,self.site.longitude,self.site.state.replace(" ",""),self.atb_year,self.extra_desc))
         site_res = pd.Series(self.site.as_dict())
         lcoh_res = self.make_LCOH_summary_results()
         lcoe_res = self.make_LCOE_summary_results()
@@ -288,10 +326,29 @@ class NedOutputs(BaseClassNed):
 
         if save_separately:
             site_res.to_pickle(output_filepath_root + "--Site_Info.pkl")
-            lcoh_res.to_pickle(output_filepath_root + "--LCOH_Results.pkl")
-            lcoe_res.to_pickle(output_filepath_root + "--LCOE_Results.pkl")
-            phys_res.to_pickle(output_filepath_root + "--Physics_Results.pkl")
-            fin_res.to_pickle(output_filepath_root + "--Financial_Results.pkl")
+            lcoh_res.to_pickle(output_filepath_root + "--LCOH_Summary.pkl")
+            lcoe_res.to_pickle(output_filepath_root + "--LCOE_Summary.pkl")
+            phys_res.to_pickle(output_filepath_root + "--Physics_Summary.pkl")
+            fin_res.to_pickle(output_filepath_root + "--Financial_Summary.pkl")
         else:
             res = {"Site":site_res,"LCOH":lcoh_res,"LCOE":lcoe_res,"Physics":phys_res,"Financials":fin_res}
-            pd.Series(res).to_pickle(output_filepath_root + "--Results.pkl")
+            pd.Series(res).to_pickle(output_filepath_root + "--Summary.pkl")
+    
+    def write_detailed_outputs(self,output_dir:str,save_separately = False):
+        
+        output_filepath_root = os.path.join(output_dir,"{}-{}_{}-{}-{}-{}".format(self.site.id,self.site.latitude,self.site.longitude,self.site.state.replace(" ",""),self.atb_year,self.extra_desc))
+        site_res = pd.Series(self.site.as_dict())
+        lcoh_res = self.make_LCOH_detailed_results()
+        lcoe_res = self.make_LCOE_detailed_results()
+        phys_res = self.make_Physics_detailed_results()
+        
+
+        if save_separately:
+            # site_res.to_pickle(output_filepath_root + "--Site_Info.pkl")
+            lcoh_res.to_pickle(output_filepath_root + "--LCOH_Detailed.pkl")
+            lcoe_res.to_pickle(output_filepath_root + "--LCOE_Detailed.pkl")
+            phys_res.to_pickle(output_filepath_root + "--Physics_Timeseries.pkl")
+            # fin_res.to_pickle(output_filepath_root + "--Financial_Summary.pkl")
+        else:
+            res = {"Site":site_res,"LCOH":lcoh_res,"LCOE":lcoe_res,"Physics":phys_res}
+            pd.Series(res).to_pickle(output_filepath_root + "--Detailed.pkl")

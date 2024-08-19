@@ -451,7 +451,7 @@ def check_config_values(
     config.greenheart_config["electrolyzer"]["rating"] = ned_man.electrolyzer_size_mw
     return config
 
-def run_baseline_site(site_info,config_input_dict,ned_output_config_dict,ned_man_dict):
+def run_baseline_site(site_info,config_input_dict,ned_output_config_dict,ned_man_dict,save_detailed_res = True,save_res_seperately = False):
     ned_site = Site.from_dict(site_info)
     ned_output_config_dict.update({"site":ned_site})
     ned_output_config_dict.update({"extra_desc":"onsite_storage"})
@@ -481,7 +481,10 @@ def run_baseline_site(site_info,config_input_dict,ned_output_config_dict,ned_man
         ned_man=ned_man,
         ned_out=ned_out)
     # ned_res.write_outputs(output_dir = ned_man.output_directory,save_separately=False)
-    ned_res.write_outputs(output_dir = ned_man.output_directory,save_separately=True)
+    ned_res.write_output_summary(output_dir = ned_man.output_directory,save_separately=save_res_seperately)
+    if save_detailed_res:
+        ned_res.write_detailed_outputs(output_dir = ned_man.output_directory,save_separately=save_res_seperately)
+
     ned_man.baseline_h2_storage_type = "lined_rock_cavern"
     
     #reset outputs for geologic storage
@@ -499,7 +502,9 @@ def run_baseline_site(site_info,config_input_dict,ned_output_config_dict,ned_man
         ned_man=ned_man,
         ned_out=ned_out)
     
-    ned_res.write_outputs(output_dir = ned_man.output_directory,save_separately=True)
+    ned_res.write_output_summary(output_dir = ned_man.output_directory,save_separately=save_res_seperately)
+    if save_detailed_res:
+        ned_res.write_detailed_outputs(output_dir = ned_man.output_directory,save_separately=save_res_seperately)
     
 
 def setup_runs(input_config):
@@ -661,7 +666,13 @@ if __name__ == "__main__":
     input_config = load_yaml(input_filepath)
     site_list, inputs = setup_runs(input_config)
     config_input_dict,ned_output_config_dict,ned_man = inputs
-    run_baseline_site(site_list.iloc[site_id].to_dict(),config_input_dict,ned_output_config_dict,ned_man)
+    run_baseline_site(
+        site_list.iloc[site_id].to_dict(),
+        config_input_dict,
+        ned_output_config_dict,
+        ned_man,
+        save_detailed_res=True,
+        save_res_seperately=False)
     print("done")
     end = time.perf_counter()
     time_to_run = (end-start)/60
