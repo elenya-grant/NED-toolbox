@@ -4,6 +4,8 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
+use_logger = False
+
 logging_level = logging.INFO
 formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
 run_suffix = '_' + datetime.now().isoformat().replace(':', '.')
@@ -13,10 +15,11 @@ if not os.path.isdir(log_path):
 log_path = log_path / ("ned_res" + run_suffix + ".log")
 # print(log_path)
 toolbox_logger = logging.getLogger('NedSim')
-logging.basicConfig(level=logging_level,
-                        datefmt='%m-%d %H:%M',
-                        filename=str(log_path),
-                        filemode='w')
+if use_logger:
+    logging.basicConfig(level=logging_level,
+                            datefmt='%m-%d %H:%M',
+                            filename=str(log_path),
+                            filemode='w')
 # toolbox_logger.info("info: I'm Here")
 # toolbox_logger.warning("warning: I'm Here")
 # toolbox_logger.error("error: I'm Here")
