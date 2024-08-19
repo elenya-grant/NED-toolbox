@@ -14,7 +14,7 @@ from toolbox.tools.wind_layout_tools import make_site_boundaries_for_square_layo
 import numpy as np
 from hopp.tools.analysis import create_cost_calculator
 import copy
-from toolbox.simulation.results import LCOHResults,LCOEResults,FinanceResults
+from toolbox.simulation.results import LCOHResults,LCOEResults,FinanceResults, PhysicsResults
 def set_up_greenheart_run_renewables(config:GreenHeartSimulationConfig,power_for_peripherals_kw = 0.0):
     
     config, hi, wind_cost_results = setup_greenheart_simulation(config=config,power_for_peripherals_kw=power_for_peripherals_kw)
@@ -266,7 +266,15 @@ def run_physics_and_design(
         grid_power_profile[i] = total_accessory_power_grid_kw
         if r > 0:
             remaining_power_profile[i] = r
+    phy_res = PhysicsResults(
+        hopp_results = hopp_results_internal,
+        electrolyzer_physics_results=electrolyzer_physics_results,
+        h2_storage_results=h2_storage_results,
+        h2_transport_pipe_results=h2_transport_pipe_results,
+        h2_transport_compressor_results=h2_transport_compressor_results)
+    phy_res.update_h2_design_scenario(greenheart_config["h2_storage"]["type"],design_scenario["transportation"])
     return (
+        phy_res,
         electrolyzer_physics_results,
         hopp_results,
         h2_prod_store_results,
@@ -310,7 +318,18 @@ def calc_capex_and_opex(hopp_results, h2_prod_store_results, h2_transport_result
         verbose=config.verbose,
         total_export_system_cost=capex_breakdown["electrical_export_system"],
     )
-    return capex_breakdown, opex_breakdown_annual
+    fin_res = FinanceResults(
+        capex_breakdown = capex_breakdown,
+        opex_breakdown_annual = opex_breakdown_annual,
+        atb_year = config.greenheart_config["project_parameters"]["atb_year"],
+        atb_scenario = "",
+        policy_scenario = config.incentive_option,
+        re_plant_type = "",
+        h2_storage_type = config.greenheart_config["h2_storage"]["type"],
+        h2_transport_type = config.design_scenario["transportation"]
+
+    )
+    return capex_breakdown, opex_breakdown_annual, fin_res
 
 def calc_lcoe(
     hopp_results,

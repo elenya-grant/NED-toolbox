@@ -15,8 +15,8 @@ class Site(BaseClassNed):
     # latitude: float = field(validator=gt_zero)
     # longitude: float = field(validator=gt_zero)
     
-    distance_to_salt_cavern: float = field(validator=gt_zero)
-    distance_to_rock_cavern: float = field(validator=gt_zero)
+    distance_to_salt_cavern: float = field(converter = hopp_float_type)
+    distance_to_rock_cavern: float = field(converter = hopp_float_type)
     # balancing_area_id: int = field(validator=range_val(1,134))
 
     balancing_area: Optional[str] = field(default = None)
