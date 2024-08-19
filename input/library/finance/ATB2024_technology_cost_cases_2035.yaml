@@ -1,0 +1,60 @@
+wind_cost_year: 2022
+solar_cost_year: 2022
+battery_cost_year: 2022
+electrolyzer_cost_year: 2020
+ATB_year: 2035
+
+cost_cases:
+  Conservative:
+    wind: 
+      overnight_capex: 1336 #[$/kW]
+      fixed_om: 30 #[$/kW-year]
+    solar:
+      overnight_capex: 998 #[$/kW-ac]
+      fixed_om: 18 #[$/kWac-year]
+    battery:
+      energy_capex: 308 #[$/kWh]
+      power_capex: 326 #[$/kW]
+      # fixed_om: 39 #[$/kW-year]
+      fixed_om_percent: 2.5 #[% capex/year]
+    electrolyzer:
+      overnight_capex: 668 #[$/kW]
+      fixed_om: 12.8 #[$/kW]
+      var_om: 0.0013 #[$/kWh]
+      refurb_cost: 0.15 #[%]
+
+  Moderate:
+    wind: 
+      overnight_capex: 1159 #[$/kW]
+      fixed_om: 28 #[$/kW-year]
+    solar:
+      overnight_capex: 764 #[$/kW-ac]
+      fixed_om: 15 #[$/kWac-year]
+    battery:
+      energy_capex: 223 #[$/kWh]
+      power_capex: 306 #[$/kW]
+      # fixed_om: 30 #[$/kW-year]
+      fixed_om_percent: 2.5 #[% capex/year]
+    electrolyzer:
+      overnight_capex: 445 #[$/kW]
+      fixed_om: 12.8
+      var_om: 0.0013
+      refurb_cost: 0.15 #[%]
+
+  Advanced:
+    wind: 
+      overnight_capex: 1088 #[$/kW]
+      fixed_om: 24 #[$/kW-year]
+    solar:
+      overnight_capex: 609 #[$/kW-ac]
+      fixed_om: 13 #[$/kWac-year]
+    battery:
+      energy_capex: 181 #[$/kWh]
+      power_capex: 167 #[$/kW]
+      # fixed_om: 22 #[$/kW-year]
+      fixed_om_percent: 2.5 #[% capex/year]
+    electrolyzer:
+      overnight_capex: 239 #[$/kW]
+      fixed_om: 12.8
+      var_om: 0.0013
+      refurb_cost: 0.15 #[%]

@@ -1,0 +1,24 @@
+Advanced:
+  battery_om_per_kw: 22.275
+  pv_om_per_kw: 9.7015
+  solar_installed_cost_mw: 454477.6119
+  storage_installed_cost_mw: 167000.0
+  storage_installed_cost_mwh: 181000.0
+  wind_installed_cost_mw: 1088000.0
+  wind_om_per_kw: 24
+Conservative:
+  battery_om_per_kw: 38.95
+  pv_om_per_kw: 13.4328
+  solar_installed_cost_mw: 744776.1194
+  storage_installed_cost_mw: 326000.0
+  storage_installed_cost_mwh: 308000.0
+  wind_installed_cost_mw: 1336000.0
+  wind_om_per_kw: 30
+Moderate:
+  battery_om_per_kw: 29.95
+  pv_om_per_kw: 11.194
+  solar_installed_cost_mw: 570149.2537
+  storage_installed_cost_mw: 306000.0
+  storage_installed_cost_mwh: 223000.0
+  wind_installed_cost_mw: 1159000.0
+  wind_om_per_kw: 28
