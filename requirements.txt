@@ -1,0 +1,25 @@
+matplotlib
+numpy
+pandas>=2.0.3
+plotly
+geopy
+python-dotenv
+rainflow
+scikit-learn
+scipy
+shapely
+timezonefinder
+setuptools
+pyyaml
+pathlib
+h5pyd #for getting resource data
+# h5py
+openpyxl
+# mpi4py #for HPC runs
+NREL-rex
+packaging
+ProFAST @ git+https://github.com/NREL/ProFAST.git
+# h5pyd
+# turbine-library @ git+https://github.com/NREL/turbine-models.git@master
+# HOPP @ git+https://github.com/NREL/HOPP.git@greensteel-eco-sync
+# HOPP @ git+https://github.com/elenya-grant/HOPP.git@feature/ned
