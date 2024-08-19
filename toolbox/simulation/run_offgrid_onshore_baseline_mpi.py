@@ -31,7 +31,7 @@ from datetime import datetime
 
 def do_something(site_list,inputs,site_id):
     config_input_dict,ned_output_config_dict,ned_man = inputs
-    run_baseline_site(site_list.iloc[site_id].to_dict(),config_input_dict,ned_output_config_dict,ned_man)
+    run_baseline_site(site_list.loc[site_id].to_dict(),config_input_dict,ned_output_config_dict,ned_man)
 
 start_time = datetime.now()
 

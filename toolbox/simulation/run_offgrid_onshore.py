@@ -309,6 +309,7 @@ def sweep_plant_design_types(
     config:GreenHeartSimulationConfig,
     ned_man: NedManager,
     ned_out: NedOutputs,
+    # verbose = True
     ):
     total_accessory_power_grid_kw = 0.0 #always zero for non-pressurized storage
     start = time.perf_counter()
@@ -337,7 +338,8 @@ def sweep_plant_design_types(
 
     for plant_desc, gen_mult in ned_man.re_plant_types.items():
         t_log.info("plant-type: {}".format(plant_desc))
-        print("----- {} ------".format(plant_desc))
+        # if verbose:
+        #     print("----- {} ------".format(plant_desc))
         hopp_config = copy.deepcopy(config.hopp_config)
        
         if "wind" in plant_desc:
@@ -355,8 +357,9 @@ def sweep_plant_design_types(
         else:
             include_battery = False
 
-        print("wind capacity: {} MW".format(wind_capacity_mw))
-        print("solar capacity: {} MWac".format(pv_capacity_mwac))
+        # if verbose:
+        #     print("wind capacity: {} MW".format(wind_capacity_mw))
+        #     print("solar capacity: {} MWac".format(pv_capacity_mwac))
         hopp_config = int_tool.update_hopp_config_for_wind_capacity(wind_capacity_mw,ned_man,hopp_config)
         hopp_config = int_tool.update_hopp_config_for_solar_capacity(pv_capacity_mwac,ned_man,hopp_config)
         hopp_config = int_tool.update_hopp_config_for_battery(include_battery,ned_man,hopp_config)
@@ -366,7 +369,7 @@ def sweep_plant_design_types(
         ancillary_power_for_grid_sizing_and_battery = ancillary_power_usage_kw + adjustment_ancillary_power_usage_kw
         # hopp_config["technologies"]["grid"]["interconnect_kw"] = grid_min_size_kw + ancillary_power_usage_kw
         config,hi,wind_cost_results, hopp_results = gh_mgmt.set_up_greenheart_run_renewables(config,power_for_peripherals_kw=ancillary_power_for_grid_sizing_and_battery)
-        print("max power production: {}".format(max(hopp_results["combined_hybrid_power_production_hopp"])))
+        # print("max power production: {}".format(max(hopp_results["combined_hybrid_power_production_hopp"])))
         ghg_res = gh_mgmt.run_physics_and_design(
             hopp_results = hopp_results,
             wind_cost_results = wind_cost_results,
@@ -507,6 +510,8 @@ def run_baseline_site(site_info,config_input_dict,ned_output_config_dict,ned_man
         ned_res.write_detailed_outputs(output_dir = ned_man.output_directory,save_separately=save_res_seperately)
     
 
+def run_single_design(site_info):
+    pass
 def setup_runs(input_config):
     input_filepath = INPUT_DIR/"v1-baseline-offgrid/equal-sized/main.yaml"
     input_config = load_yaml(input_filepath)
@@ -555,23 +560,6 @@ def setup_runs(input_config):
         "plant_design_scenario":int(plant_design_num_baseline[0]),
         }
     config_input_dict.update(input_config["greenheart_config_defaults"])
-    # config = GreenHeartSimulationConfig(
-    #     filename_hopp_config,
-    #     filename_greenheart_config,
-    #     filename_turbine_config,
-    #     filename_floris_config,
-    #     verbose=False,
-    #     show_plots=False,
-    #     save_plots=False,
-    #     use_profast=True,
-    #     post_processing=False,
-    #     output_dir = output_dir,
-    #     incentive_option=input_config["baseline_options"]["baseline_incentive_option"],
-    #     plant_design_scenario=int(plant_design_num_baseline[0]),
-    #     output_level=7,
-    #     # grid_connection = False,
-    #     # output_level=7,
-    # )
     
     atb_cost_cases_filename = os.path.join(str(LIB_DIR),input_config["root_filename_atb_cost_cases"] + str(atb_year) + ".yaml")
     atb_cost_cases_hopp_cost_info_filename = os.path.join(str(LIB_DIR),input_config["root_filename_atb_cost_cases_hopp"] + str(atb_year) + ".yaml")
@@ -624,15 +612,7 @@ def setup_runs(input_config):
         "sweep_name":input_config["sweep_name"],
         "atb_year":atb_year,
         "subsweep_name":input_config["subsweep_name"],
-        # "n_incentive_options":len(gh_cnfg["policy_parameters"].keys()),
-        # "n_plant_design_types":len(re_plant_types_multipliers.keys()),
-        # "n_atb_scenarios":len(cost_cases),
-        # "n_storage_types":len(h2_storage_types)
         }
-    # h2_storage_transport_info = input_config["h2_storage_transport_info"]
-    
-    # plant_design_num_baseline = [h2_storage_transport_info[k]["plant_design_num"] for k in list(h2_storage_transport_info.keys()) \
-    #     if h2_storage_transport_info[k]["h2_storage_type"] == input_config["baseline_options"]["baseline_h2_storage_type"]]
    
     ned_manager = NedManager(
         output_directory=output_dir,
@@ -677,52 +657,4 @@ if __name__ == "__main__":
     end = time.perf_counter()
     time_to_run = (end-start)/60
     print("Took {} min to run".format(round(time_to_run,2)))
-    # run_baseline_site(site_list.iloc[0].to_dict(),config_input_dict,ned_output_config_dict,ned_manager.as_dict())
-    # ned_manager.set_renewable_specs(config)
-    # config = check_config_values(config,ned_manager)
-
-    # ned_manager.set_default_hopp_technologies(config.hopp_config["technologies"])
-
-    
-    # this_site = site_list.iloc[0][key_order].to_dict()
-    # ned_site = Site.from_dict(this_site)
-    
-    
-    
-
-
-    # config = update_config_for_site(
-    #     ned_site=ned_site,
-    #     config=config,
-    #     )
-    # config = update_config_for_baseline_cases(
-    #     ned_site=ned_site,
-    #     config=config,
-    #     ned_man = ned_manager,
-    #     )
-
-    
-
-    # ned_out = NedOutputs.from_dict({"site":ned_site,
-    # "sweep_name":input_config["sweep_name"],
-    # "atb_year":atb_year,
-    # "subsweep_name":input_config["subsweep_name"],
-    # "n_incentive_options":len(config.greenheart_config["policy_parameters"].keys()),
-    # "n_plant_design_types":len(re_plant_types_multipliers.keys()),
-    # "n_atb_scenarios":len(cost_cases),
-    # "n_storage_types":len(h2_storage_types)})
-    
-    
-
-    # ned_res = sweep_plant_design_types(
-    #     ned_site=ned_site,
-    #     config = copy.deepcopy(config),
-    #     ned_man=ned_manager,
-    #     ned_out=ned_out)
-    # ned_res.write_outputs(output_dir = ned_manager.output_directory,save_separately=False)
-  
-    # print("done")
-
-    # # copy.deepcopy(config)
-    # []
-
+   
