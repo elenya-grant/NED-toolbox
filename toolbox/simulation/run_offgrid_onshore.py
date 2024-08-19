@@ -661,7 +661,7 @@ def setup_runs(input_config):
 
 if __name__ == "__main__":
     start = time.perf_counter()
-    site_id = 3
+    site_id = 4
     input_filepath = INPUT_DIR/"v1-baseline-offgrid/equal-sized/main.yaml"
     input_config = load_yaml(input_filepath)
     site_list, inputs = setup_runs(input_config)

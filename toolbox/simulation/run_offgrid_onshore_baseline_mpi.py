@@ -100,7 +100,8 @@ def main(sitelist,inputs):
         # file_out = os.path.join(output_dir, f"gid_{gid}_{rank}.csv")
         # variable = "windspeed_100m"
         # do_something(wtk_file, file_out, variable, gid)
-        do_something(sitelist,inputs,gid)
+        inputs_copied = [copy.deepcopy(inpt) for inpt in inputs]
+        do_something(sitelist,inputs_copied,gid)
 
     print(f"rank {rank}: ellapsed time: {datetime.now() - start_time}")
 
@@ -113,7 +114,9 @@ if __name__ == "__main__":
         n_sites = int(sys.argv[1])
         start_idx = int(sys.argv[2])
 
-    input_filepath = INPUT_DIR/"v1-baseline-offgrid/equal-sized/main.yaml"
+    subsweep = "equal-sized" #["equal-sized","over-sized","under-sized"]
+    atb_year = 2030
+    input_filepath = INPUT_DIR/"v1-baseline-offgrid/{}/main-{}.yaml".format(subsweep,atb_year)
     input_config = load_yaml(input_filepath)
     
     site_list, inputs = setup_runs(input_config)
