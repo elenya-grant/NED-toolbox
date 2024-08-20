@@ -541,9 +541,9 @@ def setup_runs(input_config):
     electrolyzer_size_mw = input_config["electrolyzer_size_mw"]
     
     if input_config["hpc_or_local"].lower() == "hpc":
-        output_dir = str(input_config["output_dir"]/input_config["sweep_name"]/input_config["subsweep_name"]/input_config["atb_year"])
+        output_dir = os.path.join(input_config["output_dir"],input_config["sweep_name"],input_config["subsweep_name"],input_config["atb_year"])
     else:
-        output_dir = str(ROOT_DIR/input_config["output_dir"]/input_config["sweep_name"]/input_config["subsweep_name"]/input_config["atb_year"])
+        output_dir = os.path.join(str(ROOT_DIR),input_config["output_dir"],input_config["sweep_name"],input_config["subsweep_name"],input_config["atb_year"])
         
 
     check_create_folder(output_dir)
