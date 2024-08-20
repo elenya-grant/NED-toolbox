@@ -4,7 +4,7 @@ resource_year: 2013
 atb_year: 2030
 electrolyzer_size_mw: 720
 renewable_resource_origin: "API" #"HPC"
-# env_path: "/scratch/egrant/NED/.env"
+env_path: "/scratch/egrant/NED/.env"
 sweep_name: "offgrid-baseline"
 re_plant_capacity_multiplier: 1.0
 optimize_design: False
@@ -73,6 +73,8 @@ output_info:
     save_detailed_results:
       flag: True #saves all detailed results 
       save_separately: True
+      save_lcoe_cost_breakdown: False
+      save_lcoh_cost_breakdown: False
     save_some_detailed_results: #only used if save_detailed_results flag is False
       flag: False
       save_LCOH: False

@@ -73,7 +73,9 @@ output_info:
       save_separately: False
     save_detailed_results:
       flag: True #saves all detailed results 
-      save_separately: False
+      save_separately: True
+      save_lcoe_cost_breakdown: False
+      save_lcoh_cost_breakdown: False
     save_some_detailed_results: #only used if save_detailed_results flag is False
       flag: False
       save_LCOH: False
