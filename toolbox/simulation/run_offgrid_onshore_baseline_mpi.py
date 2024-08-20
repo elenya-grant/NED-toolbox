@@ -114,13 +114,20 @@ if __name__ == "__main__":
         n_sites = int(sys.argv[1])
         start_idx = int(sys.argv[2])
 
+    
+
     subsweep = "equal-sized" #["equal-sized","over-sized","under-sized"]
     atb_year = 2030
     input_filepath = INPUT_DIR/"v1-baseline-offgrid/{}/main-{}.yaml".format(subsweep,atb_year)
     input_config = load_yaml(input_filepath)
     
     site_list, inputs = setup_runs(input_config)
-    sitelist = site_list.iloc[start_idx:start_idx+n_sites]
+
+    end_idx = start_idx + n_sites
+    if end_idx>=len(site_list):
+        sitelist = site_list.iloc[start_idx:]
+    else:
+        sitelist = site_list.iloc[start_idx:start_idx+n_sites]
 
     main(sitelist,inputs)
 
