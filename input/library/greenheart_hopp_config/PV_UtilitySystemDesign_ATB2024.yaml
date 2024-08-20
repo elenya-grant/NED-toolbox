@@ -25,4 +25,4 @@ SystemDesign:
   - 0.0
   - 0.0
   # system_capacity: 100000.0 #kWdc
-  tilt: 0.0 #0: horizontal, 90: vertical
+  # tilt: 0.0 #0: horizontal, 90: vertical
