@@ -650,8 +650,17 @@ def setup_runs(input_config):
 if __name__ == "__main__":
     start = time.perf_counter()
     site_id = 4
-    input_filepath = INPUT_DIR/"v1-baseline-offgrid/equal-sized/main.yaml"
+    atb_year = 2030
+    version_num = 1
+    sweep_name = "baseline-offgrid"
+    subsweep_name = "equal-sized"
+    input_filepath = INPUT_DIR/"v{}-{}/{}/main-{}.yaml".format(version_num,sweep_name,subsweep_name,atb_year)
     input_config = load_yaml(input_filepath)
+
+    input_config["hpc_or_local"] = "local"
+    input_config["renewable_resource_origin"] = "API"
+    input_config.pop("env_path")
+
     site_list, inputs = setup_runs(input_config)
     config_input_dict,ned_output_config_dict,ned_man = inputs
     run_baseline_site(

@@ -123,7 +123,7 @@ if __name__ == "__main__":
 
     input_config["renewable_resource_origin"] = "HPC" #"API" or "HPC"
     input_config["hpc_or_local"] = "HPC"
-    input_config["output_dir"] = "/kfs2/projects/hopp/ned-results"
+    input_config["output_dir"] = "/kfs2/projects/hopp/ned-results/v1"
 
     site_list, inputs = setup_runs(input_config)
 
