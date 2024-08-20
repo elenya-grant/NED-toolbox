@@ -1,0 +1,80 @@
+sitelist: "ned_final_sitelist_50082locs.csv"
+hpc_or_local: "HPC" #"HPC" or "local" 
+resource_year: 2013
+atb_year: 2030
+electrolyzer_size_mw: 720
+renewable_resource_origin: "API" #"HPC"
+sweep_name: "offgrid-baseline"
+re_plant_capacity_multiplier: 1.5
+optimize_design: False
+re_plant_types:
+  wind: 1.0
+  wind-battery: 1.0
+  wind-pv: 0.5
+  wind-pv-battery: 0.5
+  pv: 1.0
+  pv-battery: 1.0
+subsweep_name: "over-sized"
+output_dir: "results/v1"
+hpc_resource_info:
+  wtk_source_path: 
+  nsrdb_source_path:
+
+root_filename_atb_cost_cases: "finance/ATB2024_technology_cost_cases_"
+root_filename_atb_cost_cases_hopp: "finance/hopp_cost_info_"
+root_filename_profast_config: "finance/profast_config_onshore_v1_"
+
+
+filename_greenheart_config: "greenheart_hopp_config/greenheart_config_onshore_template.yaml"
+filename_hopp_config: "greenheart_hopp_config/hopp_config_template.yaml"
+filename_floris_config: "wind/floris_generic_input.yaml"
+filename_turbine_config: "wind/turbines/ATB2024_6MW_170RD_floris_turbine.yaml"
+
+cost_cases: ["Conservative","Moderate","Advanced"]
+h2_storage_transport_info:
+  0:
+    h2_storage_type: "none"
+    plant_design_num: 0
+    requires_power:  False
+    distance_to_storage_key:
+  1:
+    h2_storage_type: "pipe"
+    plant_design_num: 0
+    requires_power:  False
+    distance_to_storage_key:
+  2:
+    h2_storage_type: "salt_cavern"
+    plant_design_num: 1
+    requires_power:  True
+    distance_to_storage_key: "distance_to_salt_cavern"
+  3:
+    h2_storage_type: "lined_rock_cavern"
+    plant_design_num: 1
+    requires_power:  True
+    distance_to_storage_key: "distance_to_rock_cavern"
+baseline_options:
+  baseline_atb_case: "Moderate"
+  baseline_incentive_option: 1
+  baseline_h2_storage_type: "pipe"
+greenheart_config_defaults:
+  verbose: False
+  show_plots: False
+  save_plots: False
+  use_profast: True
+  post_processing: False
+  output_level: 7
+
+
+output_info:
+  save_data:
+    save_summary_results: 
+      flag: True
+      save_separately: False
+    save_detailed_results:
+      flag: True #saves all detailed results 
+      save_separately: False
+    save_some_detailed_results: #only used if save_detailed_results flag is False
+      flag: False
+      save_LCOH: False
+      save_LCOE: False
+      save_timeseries: True
