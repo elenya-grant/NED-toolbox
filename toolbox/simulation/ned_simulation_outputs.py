@@ -22,8 +22,8 @@ def summarize_renewables_info(hopp_results):
     # timeseries_summary = {}
     plant_name = ""
     if "pv" in hybrid_simulation.technologies.keys():
-        print("PV Technology Tilt Angle {}".format(hopp_results["hybrid_plant"].technologies["pv"].panel_tilt_angle))
-        print("System Model TILT ANGLE: {}".format(hopp_results["hybrid_plant"].pv._system_model.SystemDesign.tilt))
+        # print("PV Technology Tilt Angle {}".format(hopp_results["hybrid_plant"].technologies["pv"].panel_tilt_angle))
+        # print("System Model TILT ANGLE: {}".format(hopp_results["hybrid_plant"].pv._system_model.SystemDesign.tilt))
         plant_name = "pv"
         system_model = hybrid_simulation.pv._system_model
         pv_energy_kWh_ac = np.array(system_model.Outputs.ac)/1e3 #AC inverter output power [W]
