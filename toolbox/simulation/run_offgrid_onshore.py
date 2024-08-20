@@ -596,8 +596,8 @@ def setup_runs(input_config):
         hp_cnfg = load_yaml(filename_hopp_config)
         hp_cnfg["site"].update({"path_resource":path_resource})
         new_hopp_filename = filename_hopp_config.replace(".yaml","_for_api.yaml")
-        if not os.path.isfile(new_hopp_filename):
-            write_yaml(new_hopp_filename,hp_cnfg)
+        # if not os.path.isfile(new_hopp_filename):
+        write_yaml(new_hopp_filename,hp_cnfg)
         config_input_dict.update({"filename_hopp_config":new_hopp_filename})
 
     
@@ -607,8 +607,8 @@ def setup_runs(input_config):
         hp_cnfg = load_yaml(filename_hopp_config)
         hp_cnfg["site"].update({"wtk_source_path":wtk_source_path,"nsrdb_source_path":nsrdb_source_path})
         new_hopp_filename = filename_hopp_config.replace(".yaml","_for_hpc.yaml")
-        if not os.path.isfile(new_hopp_filename):
-            write_yaml(new_hopp_filename,hp_cnfg)
+        # if not os.path.isfile(new_hopp_filename):
+        write_yaml(new_hopp_filename,hp_cnfg)
         config_input_dict.update({"filename_hopp_config":new_hopp_filename})
         
 

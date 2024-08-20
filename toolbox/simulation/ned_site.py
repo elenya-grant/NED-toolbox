@@ -95,6 +95,8 @@ class NedManager(BaseClassNed):
         self.__setattr__("battery_technologies_config_default",copy.deepcopy(default_hopp_tech["battery"]))
         pv_tech = copy.deepcopy(default_hopp_tech["pv"])
         pv_tech.pop("system_capacity_kw")
+        if "tilt" in pv_tech:
+            pv_tech.pop("tilt")
         
         self.__setattr__("pv_technologies_config_default",pv_tech)
         wind_tech = copy.deepcopy(default_hopp_tech["wind"])
