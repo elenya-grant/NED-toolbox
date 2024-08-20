@@ -93,7 +93,7 @@ def sweep_policy_cases(
     calc_lcoh,
     ):
     
-    print("sweeping incentives for h2 storage type: {}".format(config.greenheart_config["h2_storage"]["type"]))
+    # print("sweeping incentives for h2 storage type: {}".format(config.greenheart_config["h2_storage"]["type"]))
     incentives_list = list(config.greenheart_config["policy_parameters"].keys())
     #don't repeat incentive that would'ce already been run
     incentives_list = [k for k in incentives_list if k.split("option")[-1] != str(config.incentive_option)]
@@ -138,7 +138,7 @@ def run_costs_for_different_h2_storage_type(
     sweep_incentives = True,
 
 ):  
-    print("H2 Storage Type: {}".format(new_h2_storage_type))
+    # print("H2 Storage Type: {}".format(new_h2_storage_type))
     t_log.info("H2 storage type: {}".format(new_h2_storage_type))
     h2_storage_type_id = [k for k in list(ned_man.h2_system_types.keys()) if ned_man.h2_system_types[k]["h2_storage_type"] == new_h2_storage_type]
     plant_design_id = ned_man.h2_system_types[h2_storage_type_id[0]]["plant_design_num"]
@@ -266,7 +266,7 @@ def sweep_atb_cost_cases(
             calc_lcoh = True,
         )
         if sweep_incentives:
-            print("Sweeping incentives for ATB cost case: {}".format(atb_cost_case))
+            # print("Sweeping incentives for ATB cost case: {}".format(atb_cost_case))
             #config.greenheart_config["h2_storage"]["type"]
             #config.incentive_option
             ned_out = sweep_policy_cases(
@@ -286,7 +286,7 @@ def sweep_atb_cost_cases(
                 )
 
         if isinstance(new_h2_storage_type,str):
-            print("New H2 Storage Type: {}".format(new_h2_storage_type))
+            # print("New H2 Storage Type: {}".format(new_h2_storage_type))
             ned_out = run_costs_for_different_h2_storage_type(
                 ned_site,
                 copy.deepcopy(config),
@@ -344,7 +344,7 @@ def sweep_plant_design_types(
     for plant_desc, gen_mult in ned_man.re_plant_types.items():
         t_log.info("plant-type: {}".format(plant_desc))
         # if verbose:
-        print("----- {} ------".format(plant_desc))
+        # print("----- {} ------".format(plant_desc))
         hopp_config = copy.deepcopy(config.hopp_config)
        
         if "wind" in plant_desc:
@@ -514,8 +514,8 @@ def run_baseline_site(site_info,config_input_dict,ned_output_config_dict,ned_man
 def run_single_design(site_info):
     pass
 def setup_runs(input_config):
-    input_filepath = INPUT_DIR/"v1-baseline-offgrid/equal-sized/main.yaml"
-    input_config = load_yaml(input_filepath)
+    # input_filepath = INPUT_DIR/"v1-baseline-offgrid/equal-sized/main.yaml"
+    # input_config = load_yaml(input_filepath)
 
     sitelist_filename = SITELIST_DIR/input_config["sitelist"]
     site_list = pd.read_csv(sitelist_filename,index_col="Unnamed: 0")
@@ -541,9 +541,10 @@ def setup_runs(input_config):
     electrolyzer_size_mw = input_config["electrolyzer_size_mw"]
     
     if input_config["hpc_or_local"].lower() == "hpc":
-        output_dir = str(ROOT_DIR/input_config["output_dir"]/input_config["sweep_name"]/input_config["subsweep_name"])
+        output_dir = str(input_config["output_dir"]/input_config["sweep_name"]/input_config["subsweep_name"]/input_config["atb_year"])
     else:
-        output_dir = str(input_config["output_dir"]/input_config["sweep_name"]/input_config["subsweep_name"])
+        output_dir = str(ROOT_DIR/input_config["output_dir"]/input_config["sweep_name"]/input_config["subsweep_name"]/input_config["atb_year"])
+        
 
     check_create_folder(output_dir)
 
@@ -581,7 +582,10 @@ def setup_runs(input_config):
     
     if input_config["renewable_resource_origin"] == "API":
         from hopp import ROOT_DIR as hopp_root
-        env_path = str(hopp_root.parent / ".env")
+        if "env_path" in input_config:
+            env_path = input_config["env_path"]
+        else:
+            env_path = str(hopp_root.parent / ".env")
         from hopp.utilities.keys import set_nrel_key_dot_env
         set_nrel_key_dot_env(path = env_path)
         solar_resource_dir = str(ROOT_DIR/"resource_files"/"solar")
@@ -592,7 +596,8 @@ def setup_runs(input_config):
         hp_cnfg = load_yaml(filename_hopp_config)
         hp_cnfg["site"].update({"path_resource":path_resource})
         new_hopp_filename = filename_hopp_config.replace(".yaml","_for_api.yaml")
-        write_yaml(new_hopp_filename,hp_cnfg)
+        if not os.path.isfile(new_hopp_filename):
+            write_yaml(new_hopp_filename,hp_cnfg)
         config_input_dict.update({"filename_hopp_config":new_hopp_filename})
 
     
@@ -602,7 +607,8 @@ def setup_runs(input_config):
         hp_cnfg = load_yaml(filename_hopp_config)
         hp_cnfg["site"].update({"wtk_source_path":wtk_source_path,"nsrdb_source_path":nsrdb_source_path})
         new_hopp_filename = filename_hopp_config.replace(".yaml","_for_hpc.yaml")
-        write_yaml(new_hopp_filename,hp_cnfg)
+        if not os.path.isfile(new_hopp_filename):
+            write_yaml(new_hopp_filename,hp_cnfg)
         config_input_dict.update({"filename_hopp_config":new_hopp_filename})
         
 
