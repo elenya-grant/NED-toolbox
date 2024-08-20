@@ -93,7 +93,7 @@ def sweep_policy_cases(
     calc_lcoh,
     ):
     
-    
+    print("sweeping incentives for h2 storage type: {}".format(config.greenheart_config["h2_storage"]["type"]))
     incentives_list = list(config.greenheart_config["policy_parameters"].keys())
     #don't repeat incentive that would'ce already been run
     incentives_list = [k for k in incentives_list if k.split("option")[-1] != str(config.incentive_option)]
@@ -138,6 +138,7 @@ def run_costs_for_different_h2_storage_type(
     sweep_incentives = True,
 
 ):  
+    print("H2 Storage Type: {}".format(new_h2_storage_type))
     t_log.info("H2 storage type: {}".format(new_h2_storage_type))
     h2_storage_type_id = [k for k in list(ned_man.h2_system_types.keys()) if ned_man.h2_system_types[k]["h2_storage_type"] == new_h2_storage_type]
     plant_design_id = ned_man.h2_system_types[h2_storage_type_id[0]]["plant_design_num"]
@@ -265,9 +266,12 @@ def sweep_atb_cost_cases(
             calc_lcoh = True,
         )
         if sweep_incentives:
+            print("Sweeping incentives for ATB cost case: {}".format(atb_cost_case))
+            #config.greenheart_config["h2_storage"]["type"]
+            #config.incentive_option
             ned_out = sweep_policy_cases(
                 ned_out,
-                config,
+                copy.deepcopy(config),
                 re_plant_desc,
                 atb_cost_case,
                 hopp_results,
@@ -282,9 +286,10 @@ def sweep_atb_cost_cases(
                 )
 
         if isinstance(new_h2_storage_type,str):
+            print("New H2 Storage Type: {}".format(new_h2_storage_type))
             ned_out = run_costs_for_different_h2_storage_type(
                 ned_site,
-                config,
+                copy.deepcopy(config),
                 ned_man,
                 ned_out,
                 new_h2_storage_type,
@@ -339,7 +344,7 @@ def sweep_plant_design_types(
     for plant_desc, gen_mult in ned_man.re_plant_types.items():
         t_log.info("plant-type: {}".format(plant_desc))
         # if verbose:
-        #     print("----- {} ------".format(plant_desc))
+        print("----- {} ------".format(plant_desc))
         hopp_config = copy.deepcopy(config.hopp_config)
        
         if "wind" in plant_desc:
