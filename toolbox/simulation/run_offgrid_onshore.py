@@ -489,7 +489,7 @@ def run_baseline_site(site_info,config_input_dict,ned_output_config_dict,ned_man
         ned_man=ned_man,
         ned_out=ned_out)
     # ned_res.write_outputs(output_dir = ned_man.output_directory,save_separately=False)
-    ned_res.write_outputs(output_dir = ned_man.output_directory)
+    ned_res.write_outputs(output_dir = ned_man.output_directory,save_wind_solar_generation = True)
 
     ned_man.baseline_h2_storage_type = "lined_rock_cavern"
     
@@ -508,7 +508,7 @@ def run_baseline_site(site_info,config_input_dict,ned_output_config_dict,ned_man
         ned_man=ned_man,
         ned_out=ned_out)
     
-    ned_res.write_outputs(output_dir = ned_man.output_directory)
+    ned_res.write_outputs(output_dir = ned_man.output_directory, save_wind_solar_generation = False)
     
 
 def run_single_design(site_info):
@@ -541,9 +541,9 @@ def setup_runs(input_config):
     electrolyzer_size_mw = input_config["electrolyzer_size_mw"]
     
     if input_config["hpc_or_local"].lower() == "hpc":
-        output_dir = os.path.join(input_config["output_dir"],input_config["sweep_name"],input_config["subsweep_name"],input_config["atb_year"])
+        output_dir = os.path.join(input_config["output_dir"],input_config["sweep_name"],input_config["subsweep_name"],"ATB_{}".format(input_config["atb_year"]))
     else:
-        output_dir = os.path.join(str(ROOT_DIR),input_config["output_dir"],input_config["sweep_name"],input_config["subsweep_name"],input_config["atb_year"])
+        output_dir = os.path.join(str(ROOT_DIR),"results",input_config["sweep_name"],input_config["subsweep_name"],"ATB_{}".format(input_config["atb_year"]))
         
 
     check_create_folder(output_dir)
@@ -649,7 +649,7 @@ def setup_runs(input_config):
 
 if __name__ == "__main__":
     start = time.perf_counter()
-    site_id = 4
+    site_id = 5
     atb_year = 2030
     version_num = 1
     sweep_name = "baseline-offgrid"
@@ -659,10 +659,12 @@ if __name__ == "__main__":
 
     input_config["hpc_or_local"] = "local"
     input_config["renewable_resource_origin"] = "API"
-    input_config.pop("env_path")
+    if "env_path" in input_config:
+        input_config.pop("env_path")
 
     site_list, inputs = setup_runs(input_config)
     config_input_dict,ned_output_config_dict,ned_man = inputs
+    print(ned_man["output_directory"])
     run_baseline_site(
         site_list.iloc[site_id].to_dict(),
         config_input_dict,

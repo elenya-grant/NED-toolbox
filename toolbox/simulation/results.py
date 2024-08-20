@@ -48,7 +48,7 @@ class LCOHResults(FromDictMixin):
         summary = {k:v for k,v in summary.items() if k!="lcoh_cost_breakdown"}
         return summary
 
-    def get_lcoh_detailed_results(self):
+    def get_lcoh_detailed_results(self, save_cost_breakdown = False):
         self.lcoh_cost_breakdown = self.lcoh_pf.get_cost_breakdown()
         
         self.lcoh_pf_config = {"params":self.lcoh_pf.vals,
@@ -60,6 +60,9 @@ class LCOHResults(FromDictMixin):
 
         d = self.as_dict()
         summary = {k:v for k,v in d.items() if k!="lcoh_pf"}
+        if not save_cost_breakdown:
+            summary = {k:v for k,v in summary.items() if k!="lcoh_cost_breakdown"}
+
         # detailed_keys = ["lcoh_pf_config","lcoh_cost_breakdown"]
         # summary = {k:v for k,v in d.items() if k in detailed_keys}
         return summary
@@ -105,7 +108,7 @@ class LCOEResults(FromDictMixin):
         summary = {k:v for k,v in summary.items() if k!="lcoe_cost_breakdown"}
         return summary
     
-    def get_lcoe_detailed_results(self):
+    def get_lcoe_detailed_results(self, save_cost_breakdown = False):
         self.lcoe_cost_breakdown = self.lcoe_pf.get_cost_breakdown()
         
         self.lcoe_pf_config = {"params":self.lcoe_pf.vals,
@@ -117,6 +120,8 @@ class LCOEResults(FromDictMixin):
         
         d = self.as_dict()
         summary = {k:v for k,v in d.items() if k!="lcoe_pf"}
+        if not save_cost_breakdown:
+            summary = {k:v for k,v in summary.items() if k!="lcoe_cost_breakdown"}
         # detailed_keys = ["lcoe_pf_config","lcoe_cost_breakdown"]
         # summary = {k:v for k,v in d.items() if k in detailed_keys}
         return summary
@@ -227,10 +232,15 @@ class PhysicsResults(FromDictMixin):
         summary = {k:v for k,v in summary.items() if k!="timeseries"}
         return summary
 
-    def get_physics_timeseries(self):
+    def get_physics_timeseries(self, save_wind_solar_timeseries = True):
         d = self.as_dict()
         ts_keys = ["timeseries","renewable_plant_design_type","re_plant_type","h2_storage_type","h2_transport_type"]
         summary = {k:v for k,v in d.items() if k in ts_keys}
+        if not save_wind_solar_timeseries:
+            if "wind" in self.renewable_plant_design_type:
+                summary["timeseries"].pop("Wind Generation")
+            if "pv" in self.renewable_plant_design_type:
+                summary["timeseries"].pop("PV Generation")
         return summary
 
 
@@ -260,6 +270,9 @@ class NedOutputs(BaseClassNed):
     save_detailed_LCOH: Optional[bool] = field(default = False)
     save_detailed_LCOE: Optional[bool] = field(default = False)
     save_timeseries: Optional[bool] = field(default = True)
+
+    save_lcoe_cost_breakdown: Optional[bool] = field(default = False)
+    save_lcoh_cost_breakdown: Optional[bool] = field(default = False)
     # saved_num: int = field(init = False)
     
     
@@ -276,6 +289,10 @@ class NedOutputs(BaseClassNed):
         if "save_detailed_results" in self.save_data_info:
             self.save_detailed_results = self.save_data_info["save_detailed_results"]["flag"]
             self.save_detailed_separately = self.save_data_info["save_detailed_results"]["save_separately"]
+            if "save_lcoe_cost_breakdown" in self.save_data_info["save_detailed_results"]:
+                self.save_lcoe_cost_breakdown = self.save_data_info["save_detailed_results"]["save_lcoe_cost_breakdown"]
+            if "save_lcoh_cost_breakdown" in self.save_data_info["save_detailed_results"]:
+                self.save_lcoh_cost_breakdown = self.save_data_info["save_detailed_results"]["save_lcoh_cost_breakdown"]
             if not self.save_detailed_results:
                 if "save_some_detailed_results" in self.save_data_info:
                     if self.save_data_info["save_some_detailed_results"]["flag"] and not self.save_detailed_results:
@@ -315,15 +332,15 @@ class NedOutputs(BaseClassNed):
         return pd.DataFrame(temp)
     
     def make_LCOH_detailed_results(self):
-        temp = [pd.Series(self.LCOH_Res[i].get_lcoh_detailed_results()) for i in range(len(self.LCOH_Res))]
+        temp = [pd.Series(self.LCOH_Res[i].get_lcoh_detailed_results(save_cost_breakdown=self.save_lcoh_cost_breakdown)) for i in range(len(self.LCOH_Res))]
         return pd.DataFrame(temp)
 
     def make_LCOE_detailed_results(self):
-        temp = [pd.Series(self.LCOE_Res[i].get_lcoe_detailed_results()) for i in range(len(self.LCOE_Res))]
+        temp = [pd.Series(self.LCOE_Res[i].get_lcoe_detailed_results(save_cost_breakdown=self.save_lcoe_cost_breakdown)) for i in range(len(self.LCOE_Res))]
         return pd.DataFrame(temp)
     
-    def make_Physics_detailed_results(self):
-        temp = [pd.Series(self.Physics_Res[i].get_physics_timeseries()) for i in range(len(self.Physics_Res))]
+    def make_Physics_detailed_results(self, save_wind_solar_generation):
+        temp = [pd.Series(self.Physics_Res[i].get_physics_timeseries(save_wind_solar_timeseries=save_wind_solar_generation)) for i in range(len(self.Physics_Res))]
         return pd.DataFrame(temp)
 
     def write_output_summary(self,output_dir:str):
@@ -346,13 +363,13 @@ class NedOutputs(BaseClassNed):
             res = {"Site":site_res,"LCOH":lcoh_res,"LCOE":lcoe_res,"Physics":phys_res,"Financials":fin_res}
             pd.Series(res).to_pickle(output_filepath_root + "--Summary.pkl")
     
-    def write_detailed_outputs(self,output_dir:str):
+    def write_detailed_outputs(self,output_dir:str,save_wind_solar_generation):
         
         output_filepath_root = os.path.join(output_dir,"{}-{}_{}-{}-{}-{}".format(self.site.id,self.site.latitude,self.site.longitude,self.site.state.replace(" ",""),self.atb_year,self.extra_desc))
         site_res = pd.Series(self.site.as_dict())
         lcoh_res = self.make_LCOH_detailed_results()
         lcoe_res = self.make_LCOE_detailed_results()
-        phys_res = self.make_Physics_detailed_results()
+        phys_res = self.make_Physics_detailed_results(save_wind_solar_generation)
         
 
         if self.save_detailed_separately:
@@ -365,13 +382,13 @@ class NedOutputs(BaseClassNed):
             res = {"Site":site_res,"LCOH":lcoh_res,"LCOE":lcoe_res,"Physics":phys_res}
             pd.Series(res).to_pickle(output_filepath_root + "--Detailed.pkl")
 
-    def write_outputs(self,output_dir):
+    def write_outputs(self,output_dir,save_wind_solar_generation = True):
         
 
         if self.save_summary_results:
             self.write_output_summary(output_dir)
         if self.save_detailed_results:
-            self.write_detailed_outputs(output_dir)
+            self.write_detailed_outputs(output_dir, save_wind_solar_generation)
         elif self.save_some_detailed_results:
             output_filepath_root = os.path.join(output_dir,"{}-{}_{}-{}-{}-{}".format(self.site.id,self.site.latitude,self.site.longitude,self.site.state.replace(" ",""),self.atb_year,self.extra_desc))
             if self.save_detailed_LCOE:
@@ -381,7 +398,7 @@ class NedOutputs(BaseClassNed):
                 lcoh_res = self.make_LCOH_detailed_results()
                 lcoh_res.to_pickle(output_filepath_root + "--LCOH_Detailed.pkl")
             if self.save_timeseries:
-                phys_res = self.make_Physics_detailed_results()
+                phys_res = self.make_Physics_detailed_results(save_wind_solar_generation)
                 phys_res.to_pickle(output_filepath_root + "--Physics_Timeseries.pkl")
 
 
