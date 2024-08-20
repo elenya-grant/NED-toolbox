@@ -63,3 +63,17 @@ greenheart_config_defaults:
   use_profast: True
   post_processing: False
   output_level: 7
+
+output_info:
+  save_data:
+    save_summary_results: 
+      flag: True
+      save_separately: False
+    save_detailed_results:
+      flag: True #saves all detailed results 
+      save_separately: True
+    save_some_detailed_results: #only used if save_detailed_results flag is False
+      flag: False
+      save_LCOH: False
+      save_LCOE: False
+      save_timeseries: True

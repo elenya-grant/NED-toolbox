@@ -30,17 +30,16 @@ class LCOHResults(FromDictMixin):
     lcoh_pf_config: Optional[dict] = field(default = {})
     lcoh_cost_breakdown: Optional[pd.DataFrame] = field(default = None)
 
-    def __attrs_post_init__(self):
+    # def __attrs_post_init__(self):
         
-        self.lcoh_cost_breakdown = self.lcoh_pf.get_cost_breakdown()
+    #     self.lcoh_cost_breakdown = self.lcoh_pf.get_cost_breakdown()
         
-        self.lcoh_pf_config = {"params":self.lcoh_pf.vals,
-        "capital_items":self.lcoh_pf.capital_items,
-        "fixed_costs":self.lcoh_pf.fixed_costs,
-        "feedstocks":self.lcoh_pf.feedstocks,
-        "incentives":self.lcoh_pf.incentives,
-        "LCOH":self.lcoh_pf.LCO}
-        # self.lcoh_pf_config = pd.Series(lcoh_pf_config)
+    #     self.lcoh_pf_config = {"params":self.lcoh_pf.vals,
+    #     "capital_items":self.lcoh_pf.capital_items,
+    #     "fixed_costs":self.lcoh_pf.fixed_costs,
+    #     "feedstocks":self.lcoh_pf.feedstocks,
+    #     "incentives":self.lcoh_pf.incentives,
+    #     "LCOH":self.lcoh_pf.LCO}
 
     def get_lcoh_summary(self):
         d = self.as_dict()
@@ -50,6 +49,15 @@ class LCOHResults(FromDictMixin):
         return summary
 
     def get_lcoh_detailed_results(self):
+        self.lcoh_cost_breakdown = self.lcoh_pf.get_cost_breakdown()
+        
+        self.lcoh_pf_config = {"params":self.lcoh_pf.vals,
+        "capital_items":self.lcoh_pf.capital_items,
+        "fixed_costs":self.lcoh_pf.fixed_costs,
+        "feedstocks":self.lcoh_pf.feedstocks,
+        "incentives":self.lcoh_pf.incentives,
+        "LCOH":self.lcoh_pf.LCO}
+
         d = self.as_dict()
         summary = {k:v for k,v in d.items() if k!="lcoh_pf"}
         # detailed_keys = ["lcoh_pf_config","lcoh_cost_breakdown"]
@@ -78,18 +86,17 @@ class LCOEResults(FromDictMixin):
     lcoe_pf_config: Optional[dict] = field(default = {})
     lcoe_cost_breakdown: Optional[pd.DataFrame] = field(default = None)
 
-    def __attrs_post_init__(self):
+    # def __attrs_post_init__(self):
         
-        self.lcoe_cost_breakdown = self.lcoe_pf.get_cost_breakdown()
+        # self.lcoe_cost_breakdown = self.lcoe_pf.get_cost_breakdown()
         
-        self.lcoe_pf_config = {"params":self.lcoe_pf.vals,
-        "capital_items":self.lcoe_pf.capital_items,
-        "fixed_costs":self.lcoe_pf.fixed_costs,
-        "feedstocks":self.lcoe_pf.feedstocks,
-        "incentives":self.lcoe_pf.incentives,
-        "LCOE":self.lcoe_pf.LCO}
-        # self.lcoe_pf_config = pd.Series(lcoe_pf_config)
-        # self.lcoe_pf_config = pd.Series(lcoe_pf_config)
+        # self.lcoe_pf_config = {"params":self.lcoe_pf.vals,
+        # "capital_items":self.lcoe_pf.capital_items,
+        # "fixed_costs":self.lcoe_pf.fixed_costs,
+        # "feedstocks":self.lcoe_pf.feedstocks,
+        # "incentives":self.lcoe_pf.incentives,
+        # "LCOE":self.lcoe_pf.LCO}
+        
     
     def get_lcoe_summary(self):
         d = self.as_dict()
@@ -99,6 +106,15 @@ class LCOEResults(FromDictMixin):
         return summary
     
     def get_lcoe_detailed_results(self):
+        self.lcoe_cost_breakdown = self.lcoe_pf.get_cost_breakdown()
+        
+        self.lcoe_pf_config = {"params":self.lcoe_pf.vals,
+        "capital_items":self.lcoe_pf.capital_items,
+        "fixed_costs":self.lcoe_pf.fixed_costs,
+        "feedstocks":self.lcoe_pf.feedstocks,
+        "incentives":self.lcoe_pf.incentives,
+        "LCOE":self.lcoe_pf.LCO}
+        
         d = self.as_dict()
         summary = {k:v for k,v in d.items() if k!="lcoe_pf"}
         # detailed_keys = ["lcoe_pf_config","lcoe_cost_breakdown"]
@@ -135,11 +151,6 @@ class FinanceResults(FromDictMixin):
         d = self.as_dict()
         # summary = {k:v for k,v in d.items() if k!="lcoe_pf"}
         return d #summary
-        
-    # pv_capacity_MWac: Union[float,int]
-    # wind_capacity_MWac: Union[float,int]
-    # battery_capacity_MWdc: Optional[Union[float,int]] = field(default = 0)
-    # battery_capacity_MWhdc: Optional[Union[float,int]] = field(default = 0)
 
 @define
 class PhysicsResults(FromDictMixin):
@@ -178,8 +189,11 @@ class PhysicsResults(FromDictMixin):
 
         self.timeseries.update({"H2 Production [kg/hr]":h2_hourly})
         self.timeseries.update({"HOPP Power Production [kW]":np.array(self.hopp_results["combined_hybrid_power_production_hopp"])})
-        self.timeseries.update({"HOPP Curtailment [kW]":self.hopp_results['combined_hybrid_curtailment_hopp']})
         self.timeseries.update({"Power to Electrolyzer [kW]":self.electrolyzer_physics_results["power_to_electrolyzer_kw"]})
+        
+        if sum(self.hopp_results['combined_hybrid_curtailment_hopp'])<100:
+            self.timeseries.update({"HOPP Curtailment [kW]":self.hopp_results['combined_hybrid_curtailment_hopp']})
+        
         if "wind" in self.renewable_plant_design_type:
             
             self.timeseries.update({"Wind Generation":self.hopp_results["hybrid_plant"].wind.generation_profile})
@@ -189,8 +203,9 @@ class PhysicsResults(FromDictMixin):
             self.timeseries.update({"PV Generation":self.hopp_results["hybrid_plant"].pv.generation_profile})
 
         if "hydrogen_storage_soc" in self.h2_storage_results:
-            soc = self.h2_storage_results.pop("hydrogen_storage_soc")
-            self.timeseries.update({"H2 Storage SOC [kg]":soc})
+            # soc = self.h2_storage_results.pop("hydrogen_storage_soc")
+            # self.timeseries.update({"H2 Storage SOC [kg]":soc})
+            self.h2_storage_results.pop("hydrogen_storage_soc")
         
 
         self.hopp_results = {} #remove big data
@@ -217,21 +232,6 @@ class PhysicsResults(FromDictMixin):
         ts_keys = ["timeseries","renewable_plant_design_type","re_plant_type","h2_storage_type","h2_transport_type"]
         summary = {k:v for k,v in d.items() if k in ts_keys}
         return summary
-        
-        # if self.h2_transport_pipe_results is not None:
-        #     h2_storage_transport_design_type = ""
-        #     if isinstance(self.h2_transport_pipe_results,pd.DataFrame):
-        #         h2_transport_type = "none"
-        #         self.h2_transport_pipe_results = {}
-
-        # if self.h2_storage_results is not None:
-        #     self.h2_storage_results["h2_storage_max_fill_rate_kg_hr"]
-        #     self.h2_storage_results["h2_storage_capacity_kg"]
-
-
-# @define
-# class RenewablesResults:
-#     hopp_config: dict = field(init=False)
 
 
 @define
@@ -243,34 +243,46 @@ class NedOutputs(BaseClassNed):
 
     subsweep_name: Optional[str] = field(default = None) #"oversized,undersized,equal-sized"
     extra_desc: Optional[str] = field(default = "")
-    # n_incentive_options: int = field(default = 1)
-    # n_plant_design_types: int = field(default = 1)
-    # n_atb_scenarios: int = field(default = 1)
-    # n_storage_types: int = field(default = 1)
-
-    # n_lcoh_results: int = field(init=False)
-    # n_lcoe_results: int = field(init=False)
-    # n_opex_capex_breakdown_results: int = field(init = False)
-    # n_physics_results: int = field(init = False)
-
+    
+    save_data_info: dict = field(default = {})
     LCOH_Res: List[LCOHResults] = field(init = False)
     LCOE_Res: List[LCOEResults] = field(init = False)
     Finance_Res: List[FinanceResults] = field(init = False)
     Physics_Res: List[PhysicsResults] = field(init = False)
     
+    save_summary_results: Optional[bool] = field(default = True)
+    save_summary_separately: Optional[bool] = field(default = False)
+
+    save_detailed_results: Optional[bool] = field(default = True)
+    save_detailed_separately: Optional[bool] = field(default = False)
+    save_some_detailed_results: Optional[bool] = field(default = False)
+
+    save_detailed_LCOH: Optional[bool] = field(default = False)
+    save_detailed_LCOE: Optional[bool] = field(default = False)
+    save_timeseries: Optional[bool] = field(default = True)
     # saved_num: int = field(init = False)
     
     
     def __attrs_post_init__(self):
-        # self.n_lcoh_results = self.n_incentive_options*self.n_plant_design_types*self.n_atb_scenarios*self.n_storage_types
-        # self.n_lcoe_results = self.n_incentive_options*self.n_plant_design_types*self.n_atb_scenarios
-        # self.n_opex_capex_breakdown_results = self.n_plant_design_types*self.n_atb_scenarios*self.n_storage_types
-        # self.n_physics_results = self.n_plant_design_types*self.n_storage_types
+        
 
         self.LCOH_Res = []
         self.LCOE_Res = []
         self.Finance_Res = []
         self.Physics_Res = []
+        if "summary_results" in self.save_data_info:
+            self.save_summary_results = self.save_data_info["save_summary_results"]["flag"]
+            self.save_summary_separately = self.save_data_info["save_summary_results"]["save_separately"]
+        if "save_detailed_results" in self.save_data_info:
+            self.save_detailed_results = self.save_data_info["save_detailed_results"]["flag"]
+            self.save_detailed_separately = self.save_data_info["save_detailed_results"]["save_separately"]
+            if not self.save_detailed_results:
+                if "save_some_detailed_results" in self.save_data_info:
+                    if self.save_data_info["save_some_detailed_results"]["flag"] and not self.save_detailed_results:
+                        self.save_detailed_LCOH = self.save_data_info["save_some_detailed_results"]["save_LCOH"]
+                        self.save_detailed_LCOE = self.save_data_info["save_some_detailed_results"]["save_LCOE"]
+                        self.save_timeseries = self.save_data_info["save_some_detailed_results"]["save_timeseries"]
+
 
         # self.saved_num = 0
 
@@ -314,7 +326,7 @@ class NedOutputs(BaseClassNed):
         temp = [pd.Series(self.Physics_Res[i].get_physics_timeseries()) for i in range(len(self.Physics_Res))]
         return pd.DataFrame(temp)
 
-    def write_output_summary(self,output_dir:str,save_separately = False):
+    def write_output_summary(self,output_dir:str):
         # self.saved_num +=1
         # output_filepath_root = os.path.join(output_dir,"{}-{}_{}-{}-{}_{}".format(self.site.id,self.site.latitude,self.site.longitude,self.site.state,self.site.county,self.extra_desc))
         output_filepath_root = os.path.join(output_dir,"{}-{}_{}-{}-{}-{}".format(self.site.id,self.site.latitude,self.site.longitude,self.site.state.replace(" ",""),self.atb_year,self.extra_desc))
@@ -324,7 +336,7 @@ class NedOutputs(BaseClassNed):
         phys_res = self.make_Physics_summary_results()
         fin_res = self.make_Finance_summary_results()
 
-        if save_separately:
+        if self.save_summary_separately:
             site_res.to_pickle(output_filepath_root + "--Site_Info.pkl")
             lcoh_res.to_pickle(output_filepath_root + "--LCOH_Summary.pkl")
             lcoe_res.to_pickle(output_filepath_root + "--LCOE_Summary.pkl")
@@ -334,7 +346,7 @@ class NedOutputs(BaseClassNed):
             res = {"Site":site_res,"LCOH":lcoh_res,"LCOE":lcoe_res,"Physics":phys_res,"Financials":fin_res}
             pd.Series(res).to_pickle(output_filepath_root + "--Summary.pkl")
     
-    def write_detailed_outputs(self,output_dir:str,save_separately = False):
+    def write_detailed_outputs(self,output_dir:str):
         
         output_filepath_root = os.path.join(output_dir,"{}-{}_{}-{}-{}-{}".format(self.site.id,self.site.latitude,self.site.longitude,self.site.state.replace(" ",""),self.atb_year,self.extra_desc))
         site_res = pd.Series(self.site.as_dict())
@@ -343,7 +355,7 @@ class NedOutputs(BaseClassNed):
         phys_res = self.make_Physics_detailed_results()
         
 
-        if save_separately:
+        if self.save_detailed_separately:
             # site_res.to_pickle(output_filepath_root + "--Site_Info.pkl")
             lcoh_res.to_pickle(output_filepath_root + "--LCOH_Detailed.pkl")
             lcoe_res.to_pickle(output_filepath_root + "--LCOE_Detailed.pkl")
@@ -352,3 +364,25 @@ class NedOutputs(BaseClassNed):
         else:
             res = {"Site":site_res,"LCOH":lcoh_res,"LCOE":lcoe_res,"Physics":phys_res}
             pd.Series(res).to_pickle(output_filepath_root + "--Detailed.pkl")
+
+    def write_outputs(self,output_dir):
+        
+
+        if self.save_summary_results:
+            self.write_output_summary(output_dir)
+        if self.save_detailed_results:
+            self.write_detailed_outputs(output_dir)
+        elif self.save_some_detailed_results:
+            output_filepath_root = os.path.join(output_dir,"{}-{}_{}-{}-{}-{}".format(self.site.id,self.site.latitude,self.site.longitude,self.site.state.replace(" ",""),self.atb_year,self.extra_desc))
+            if self.save_detailed_LCOE:
+                lcoe_res = self.make_LCOE_detailed_results()
+                lcoe_res.to_pickle(output_filepath_root + "--LCOE_Detailed.pkl")
+            if self.save_detailed_LCOH:
+                lcoh_res = self.make_LCOH_detailed_results()
+                lcoh_res.to_pickle(output_filepath_root + "--LCOH_Detailed.pkl")
+            if self.save_timeseries:
+                phys_res = self.make_Physics_detailed_results()
+                phys_res.to_pickle(output_filepath_root + "--Physics_Timeseries.pkl")
+
+
+        
