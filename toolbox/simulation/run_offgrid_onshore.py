@@ -238,6 +238,7 @@ def sweep_atb_cost_cases(
     for atb_cost_case in ned_man.atb_cases_desc:
         t_log.info("\t{} ATB Cost Case".format(atb_cost_case))
         hopp_results = gh_mgmt.update_hopp_costs(hopp_results,ned_man.atb_cost_cases_hopp[atb_cost_case])
+        
         electrolyzer_cost_results = gh_mgmt.update_electrolysis_costs(config.greenheart_config,electrolyzer_physics_results,ned_man.atb_cost_cases_electrolyzer[atb_cost_case])
         h2_prod_store_results[0] = electrolyzer_cost_results
         capex_breakdown, opex_breakdown_annual, fin_res = gh_mgmt.calc_capex_and_opex(
@@ -544,7 +545,8 @@ def setup_runs(input_config):
         output_dir = os.path.join(input_config["output_dir"],input_config["sweep_name"],input_config["subsweep_name"],"ATB_{}".format(input_config["atb_year"]))
     else:
         output_dir = os.path.join(str(ROOT_DIR),"results",input_config["sweep_name"],input_config["subsweep_name"],"ATB_{}".format(input_config["atb_year"]))
-        
+        # if "kfs2" in output_dir:
+        #     stop
 
     check_create_folder(output_dir)
 

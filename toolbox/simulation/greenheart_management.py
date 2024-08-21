@@ -287,7 +287,9 @@ def run_physics_and_design(
 def calc_capex_and_opex(hopp_results, h2_prod_store_results, h2_transport_results, offshore_component_results, config:GreenHeartSimulationConfig):
     electrolyzer_cost_results, h2_storage_results = h2_prod_store_results
     h2_pipe_array_results, h2_transport_compressor_results, h2_transport_pipe_results = h2_transport_results
+    
     desal_results, platform_results, wind_cost_results = offshore_component_results
+    wind_cost_results = None
     capex, capex_breakdown = he_fin.run_capex(
         hopp_results,
         wind_cost_results,
