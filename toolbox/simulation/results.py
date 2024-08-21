@@ -196,17 +196,25 @@ class PhysicsResults(FromDictMixin):
         self.timeseries.update({"HOPP Power Production [kW]":np.array(self.hopp_results["combined_hybrid_power_production_hopp"])})
         self.timeseries.update({"Power to Electrolyzer [kW]":self.electrolyzer_physics_results["power_to_electrolyzer_kw"]})
         
+        original_gen = np.zeros(len(h2_hourly))
         if sum(self.hopp_results['combined_hybrid_curtailment_hopp'])<100:
             self.timeseries.update({"HOPP Curtailment [kW]":self.hopp_results['combined_hybrid_curtailment_hopp']})
         
         if "wind" in self.renewable_plant_design_type:
             
             self.timeseries.update({"Wind Generation":self.hopp_results["hybrid_plant"].wind.generation_profile})
+            original_gen = original_gen + np.array(self.hopp_results["hybrid_plant"].wind.generation_profile)
             
         if "pv" in self.renewable_plant_design_type:
             
             self.timeseries.update({"PV Generation":self.hopp_results["hybrid_plant"].pv.generation_profile})
-
+            original_gen = original_gen + np.array(self.hopp_results["hybrid_plant"].pv.generation_profile)
+        if "battery" in self.renewable_plant_design_type:
+            power_scale = 1 #kW
+            self.timeseries.update({"Original Generation [kW]":original_gen})
+            self.timeseries.update({"Ootimized Dispatch [kW]":np.array(self.hopp_results["hybrid_plant"].grid.generation_profile)})
+            # gen = [p * power_scale for p in list(self.hopp_results["hybrid_plant"].grid.generation_profile)]
+            
         if "hydrogen_storage_soc" in self.h2_storage_results:
             # soc = self.h2_storage_results.pop("hydrogen_storage_soc")
             # self.timeseries.update({"H2 Storage SOC [kg]":soc})
