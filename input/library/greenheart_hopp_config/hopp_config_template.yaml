@@ -54,8 +54,8 @@ technologies:
     losses: 14.0757 #dc losses
     inv_eff: 96
   battery:
-    system_capacity_kwh: 100000
-    system_capacity_kw: 400000
+    system_capacity_kwh: 400000
+    system_capacity_kw: 100000
     minimum_SOC: 20.0
     maximum_SOC: 100.0
     initial_SOC: 20.0
