@@ -58,7 +58,8 @@ def update_hopp_costs(hopp_results,hopp_cost_info):
     hopp_results["hybrid_plant"].set_om_costs(**om_cost_info)
     hopp_results["hybrid_plant"].calculate_installed_cost()
     hopp_results["hybrid_plant"].calculate_financials()
-    hopp_results["hybrid_plant"].simulate_financials(30)
+    # have to simulate financials so O&M costs are updated
+    hopp_results["hybrid_plant"].simulate_financials(1)
 
     return hopp_results
 
