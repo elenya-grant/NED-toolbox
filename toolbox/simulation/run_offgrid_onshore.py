@@ -150,7 +150,9 @@ def run_costs_for_different_h2_storage_type(
     if ned_man.h2_system_types[h2_storage_type_id[0]]["distance_to_storage_key"] is None:
         distance = 0
         config.greenheart_config["site"]["distance_to_storage_km"] = 0
+        transport_desc = "colocated"
     else:
+        transport_desc = "pipeline"
         distance = ned_site.__getattribute__(ned_man.h2_system_types[h2_storage_type_id[0]]["distance_to_storage_key"])
         config.greenheart_config["site"]["distance_to_storage_km"] = distance
         orbit_config = {"site":{"distance_to_landfall":distance}}
@@ -162,8 +164,10 @@ def run_costs_for_different_h2_storage_type(
             verbose = False)
         h2_transport_results[2] 
         # h2_transport_results = [h2_pipe_array_results, h2_transport_compressor_results, h2_transport_pipe_results]
-    config.greenheart_config["site"]["distance_to_storage_km"] = distance
+    # config.greenheart_config["site"]["distance_to_storage_km"] = distance
     # electrolyzer_cost_results, h2_storage_results = h2_prod_store_results
+    
+    
     pipe_storage, h2_storage_results = he_h2.run_h2_storage(
             config.hopp_config,
             config.greenheart_config,
@@ -173,6 +177,9 @@ def run_costs_for_different_h2_storage_type(
             verbose=False,
         )
     h2_prod_store_results[1] = h2_storage_results
+    if ned_out.Physics_Res[-1].h2_storage_type != new_h2_storage_type:
+        ned_out.Physics_Res[-1].add_h2_design(new_h2_storage_type,transport_desc,h2_storage_results,h2_transport_results[2],h2_transport_results[1])
+
     capex_breakdown, opex_breakdown_annual, fin_res = gh_mgmt.calc_capex_and_opex(
             hopp_results, 
             h2_prod_store_results, 

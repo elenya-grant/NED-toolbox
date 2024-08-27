@@ -16,8 +16,8 @@ def calculate_hourly_correlation_coeff(wind_gen_kWh,solar_gen_kWh):
     r = num/((x_d*y_d)**0.5)
     return r
 
-def summarize_renewables_info(hopp_results):
-    hybrid_simulation = hopp_results["hybrid_plant"]
+def summarize_renewables_info(hybrid_simulation):
+    # hybrid_simulation = hopp_results["hybrid_plant"]
     summary = {}
     # timeseries_summary = {}
     plant_name = ""

@@ -21,9 +21,10 @@ def set_up_greenheart_run_renewables(config:GreenHeartSimulationConfig,power_for
 
     hopp_results = he_hopp.run_hopp(
         hi,
-        project_lifetime=config.greenheart_config["project_parameters"][
-            "project_lifetime"
-        ],
+        # project_lifetime=config.greenheart_config["project_parameters"][
+        #     "project_lifetime"
+        # ],
+        project_lifetime=2,
         verbose=config.verbose,
     )
     if wind_cost_results == None:
@@ -40,7 +41,8 @@ def set_up_greenheart_run_renewables(config:GreenHeartSimulationConfig,power_for
                 wind_cost_results = he_fin.run_wind_cost_model(
                     wind_cost_inputs=wind_config, verbose=False,
                 )
-    return config,hi,wind_cost_results, hopp_results
+    hopp_res = dict(zip(list(hopp_results.keys()),hopp_results.values()))
+    return config,hi,wind_cost_results, hopp_res #hopp_results
 
 def update_hopp_costs(hopp_results,hopp_cost_info):
     hopp_cost_info = copy.deepcopy(hopp_cost_info)

@@ -183,8 +183,16 @@ class PhysicsResults(FromDictMixin):
     h2_results: Optional[dict] = field(default = {})
     electrolyzer_LTA: Optional[pd.DataFrame] = field(default = None)
     timeseries: Optional[dict] = field(default = {})
+    h2_design_results: Optional[dict] = field(default = {})
+
     def __attrs_post_init__(self):
-        self.renewables_summary, self.renewable_plant_design_type = summarize_renewables_info(self.hopp_results)
+        self.timeseries = {}
+        self.h2_results = {}
+        self.renewables_summary = {}
+        self.h2_design_results = {}
+        self.electrolyzer_LTA = pd.DataFrame()
+
+        self.renewables_summary, self.renewable_plant_design_type = summarize_renewables_info(self.hopp_results["hybrid_plant"])
         float_keys = [k for k in self.electrolyzer_physics_results["H2_Results"].keys() if isinstance(self.electrolyzer_physics_results["H2_Results"][k],(int,float))]
         self.h2_results = {k:self.electrolyzer_physics_results["H2_Results"][k] for k in float_keys}
         self.electrolyzer_LTA = self.electrolyzer_physics_results["H2_Results"]["Performance Schedules"]
@@ -198,7 +206,7 @@ class PhysicsResults(FromDictMixin):
         
         original_gen = np.zeros(len(h2_hourly))
         if sum(self.hopp_results['combined_hybrid_curtailment_hopp'])<100:
-            self.timeseries.update({"HOPP Curtailment [kW]":self.hopp_results['combined_hybrid_curtailment_hopp']})
+            self.timeseries.update({"HOPP Curtailment [kW]":self.hopp_results['combined_hybrid_curtailment_hopp'][:len(h2_hourly)]})
         
         if "wind" in self.renewable_plant_design_type:
             
@@ -212,25 +220,43 @@ class PhysicsResults(FromDictMixin):
         if "battery" in self.renewable_plant_design_type:
             power_scale = 1 #kW
             self.timeseries.update({"Original Generation [kW]":original_gen})
-            self.timeseries.update({"Ootimized Dispatch [kW]":np.array(self.hopp_results["hybrid_plant"].grid.generation_profile)})
+            self.timeseries.update({"Optimized Dispatch [kW]":np.array(self.hopp_results["hybrid_plant"].grid.generation_profile)[:len(h2_hourly)]})
             # gen = [p * power_scale for p in list(self.hopp_results["hybrid_plant"].grid.generation_profile)]
             
         if "hydrogen_storage_soc" in self.h2_storage_results:
             # soc = self.h2_storage_results.pop("hydrogen_storage_soc")
             # self.timeseries.update({"H2 Storage SOC [kg]":soc})
             self.h2_storage_results.pop("hydrogen_storage_soc")
-        
-
+        # print(self.renewable_plant_design_type)
+        # print(list(self.timeseries.keys()))
         self.hopp_results = {} #remove big data
 
         if isinstance(self.h2_transport_pipe_results,pd.DataFrame):
             self.h2_transport_pipe_results = self.h2_transport_pipe_results.T.to_dict()[0]
+            
+
+        if self.h2_storage_results is not None:
+            new_keys = [k.replace("hydrogen","h2").replace("h2_storage","storage").replace("storage","h2_storage") for k in list(self.h2_storage_results.keys())]
+            new_keys = [k.replace("h2_storage_","h2_storage: ") for k in new_keys]
+            self.h2_storage_results = dict(zip(new_keys,list(self.h2_storage_results.values())))
+
+        
+        # if self.h2_transport_compressor_results is not None:
+        #     all(k[0]==0 for k in df_sum.loc["Physics"].iloc[1]["h2_transport_pipe_results"].values())
+
+
     def update_re_plant_type(self,re_plant_type:str):
         self.re_plant_type = re_plant_type
 
     def update_h2_design_scenario(self,h2_storage_type:str,h2_transport_type:str):
         self.h2_storage_type = h2_storage_type
         self.h2_transport_type = h2_transport_type
+        self.update_h2_design()
+        # print(h2_storage_type)
+        # new_keys = [k.replace("hydrogen","h2").replace("h2_storage","storage").replace("storage","h2_storage") for k in list(self.h2_storage_results.keys())]
+        # dict(zip(new_keys,list(self.h2_storage_results.values())))
+
+        # self.h2_storage_results[self.h2_storage_type] = 
     
     def get_physics_summary(self):
         #TODO: update this
@@ -238,6 +264,16 @@ class PhysicsResults(FromDictMixin):
         summary = {k:v for k,v in d.items() if k!="hopp_results"}
         summary = {k:v for k,v in summary.items() if k!="electrolyzer_physics_results"}
         summary = {k:v for k,v in summary.items() if k!="timeseries"}
+        #Below was just added
+        summary = {k:v for k,v in summary.items() if k!="h2_storage_results"}
+        summary = {k:v for k,v in summary.items() if k!="h2_transport_pipe_results"}
+        summary = {k:v for k,v in summary.items() if k!="h2_transport_compressor_results"}
+
+        if "cavern" in self.h2_storage_type:
+            summary["h2_storage_type"] = "geologic"
+        if "pipe" in self.h2_storage_type or "none" in self.h2_storage_type:
+            summary["h2_storage_type"] = "on-site"
+
         return summary
 
     def get_physics_timeseries(self, save_wind_solar_timeseries = True):
@@ -250,6 +286,36 @@ class PhysicsResults(FromDictMixin):
             if "pv" in self.renewable_plant_design_type:
                 summary["timeseries"].pop("PV Generation")
         return summary
+
+    def update_h2_design(self):
+        key_desc = "{}: {}".format(self.h2_storage_type,self.h2_transport_type)
+        self.h2_design_results[key_desc] = {}
+        self.h2_design_results[key_desc].update(self.h2_storage_results)
+        pipe_summary = {"h2_pipeline: {}".format(k):v for k,v in self.h2_transport_pipe_results.items()}
+        compressor_summary = {"transport_compressor: {}".format(k.replace("compressor_","")):v for k,v in self.h2_transport_compressor_results.items()}
+        self.h2_design_results[key_desc].update(pipe_summary)
+        self.h2_design_results[key_desc].update(compressor_summary)
+    
+    def add_h2_design(self,h2_storage_type,h2_transport_type,h2_storage_results,h2_transport_pipe_results,h2_transport_compressor_results):
+        key_desc = "{}: {}".format(h2_storage_type,h2_transport_type)
+        if key_desc not in self.h2_design_results.keys():
+
+            if isinstance(h2_transport_pipe_results,pd.DataFrame):
+                h2_transport_pipe_results = h2_transport_pipe_results.T.to_dict()[0]
+
+            if "hydrogen_storage_soc" in h2_storage_results:
+                h2_storage_results.pop("hydrogen_storage_soc")
+            new_keys = [k.replace("hydrogen","h2").replace("h2_storage","storage").replace("storage","h2_storage") for k in list(h2_storage_results.keys())]
+            new_keys = [k.replace("h2_storage_","h2_storage: ") for k in new_keys]
+            h2_storage_results = dict(zip(new_keys,list(h2_storage_results.values())))
+            
+            self.h2_design_results[key_desc] = {}
+            self.h2_design_results[key_desc].update(h2_storage_results)
+            pipe_summary = {"h2_pipeline: {}".format(k):v for k,v in h2_transport_pipe_results.items()}
+            compressor_summary = {"transport_compressor: {}".format(k.replace("compressor_","")):v for k,v in h2_transport_compressor_results.items()}
+            self.h2_design_results[key_desc].update(pipe_summary)
+            self.h2_design_results[key_desc].update(compressor_summary)
+
 
 
 @define
