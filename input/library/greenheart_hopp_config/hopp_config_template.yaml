@@ -1,7 +1,7 @@
-site: #!include flatirons_site.yaml
+site: 
   data:
-    lat: 45.00 #47.5233 #45.00
-    lon: -93.16 #-92.5366 #-93.16
+    lat: 45.00 
+    lon: -93.00 
     # elev: 1099
     year: 2013
     # tz: -6
@@ -16,8 +16,6 @@ site: #!include flatirons_site.yaml
         - [0.0, 20000.0]
         - [20000.0, 20000.0]
         - [20000.0, 0.0]
-  # solar_resource_file: "input/weather/solar/47.5233_-92.5366_psmv3_60_2013.csv"
-  # wind_resource_file: "input/weather/wind/47.5233_-92.5366_windtoolkit_2013_60min_100m_120m.srw"
   solar_resource_file: ""
   wind_resource_file: ""
   wave_resource_file: ""
@@ -25,12 +23,12 @@ site: #!include flatirons_site.yaml
   hub_height: 115.0
   capacity_hours: []
   desired_schedule: []
-  curtailment_value_type: "grid" #"desired_schedule"
+  curtailment_value_type: "grid" #"desired_schedule" #NOTE: will be updated to interconnect_kw
   solar: true
   wind: true
   wave: false
   wind_resource_origin: "WTK"
-  renewable_resource_origin: "API" #[API or HPC]
+  renewable_resource_origin: "HPC" #[API or HPC]
   
 
 technologies:
