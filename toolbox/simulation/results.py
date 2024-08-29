@@ -221,6 +221,10 @@ class PhysicsResults(FromDictMixin):
             power_scale = 1 #kW
             self.timeseries.update({"Original Generation [kW]":original_gen})
             self.timeseries.update({"Optimized Dispatch [kW]":np.array(self.hopp_results["hybrid_plant"].grid.generation_profile)[:len(h2_hourly)]})
+            # battery_power_out_mw = self.hopp_results["hybrid_plant"].battery.outputs.P 
+            # self.timeseries.update({"battery discharge [kW]": [(int(p>0))*p*1E3 for p in battery_power_out_mw]}) # convert from MW to kW and extract only discharging
+            # self.timeseries.update({"battery charge [kW]": [-(int(p<0))*p*1E3 for p in battery_power_out_mw]}) # convert from MW to kW and extract only charging
+            # self.timeseries.update({"battery state of charge [%]": self.hopp_results["hybrid_plant"].battery.outputs.dispatch_SOC})
             # gen = [p * power_scale for p in list(self.hopp_results["hybrid_plant"].grid.generation_profile)]
             
         if "hydrogen_storage_soc" in self.h2_storage_results:

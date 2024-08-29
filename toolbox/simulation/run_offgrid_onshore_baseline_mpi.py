@@ -121,9 +121,17 @@ if __name__ == "__main__":
     input_filepath = INPUT_DIR/"v1-baseline-offgrid/{}/main-{}.yaml".format(subsweep,atb_year)
     input_config = load_yaml(input_filepath)
 
-    input_config["renewable_resource_origin"] = "HPC" #"API" or "HPC"
-    input_config["hpc_or_local"] = "HPC"
-    input_config["output_dir"] = "/kfs2/projects/hopp/ned-results/v1"
+    # below is to run on HPC
+    # input_config["renewable_resource_origin"] = "HPC" #"API" or "HPC"
+    # input_config["hpc_or_local"] = "HPC"
+    # input_config["output_dir"] = "/kfs2/projects/hopp/ned-results/v1"
+
+    # below is to run locally
+    input_config["renewable_resource_origin"] = "API" #"API" or "HPC"
+    input_config["hpc_or_local"] = "local"
+    if "env_path" in input_config:
+        input_config.pop("env_path")
+    input_config.pop("output_dir")
 
     site_list, inputs = setup_runs(input_config)
 
