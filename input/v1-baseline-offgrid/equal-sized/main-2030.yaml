@@ -16,7 +16,7 @@ re_plant_types:
   pv: 1.0
   pv-battery: 1.0
 subsweep_name: "equal-sized"
-output_dir: "/kfs2/projects/hopp/ned-results/v1"
+output_dir: "/projects/hopp/ned-results/v1"
 hpc_resource_info:
   wtk_source_path: "/kfs2/datasets/WIND/conus/v1.0.0"
   nsrdb_source_path: "/kfs2/datasets/NSRDB/deprecated_v3"
