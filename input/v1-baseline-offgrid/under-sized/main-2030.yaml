@@ -3,7 +3,7 @@ hpc_or_local: "HPC" #"HPC" or "local"
 resource_year: 2013
 atb_year: 2030
 electrolyzer_size_mw: 720
-renewable_resource_origin: "API" #"HPC"
+renewable_resource_origin: "HPC" #"HPC"
 env_path: "/scratch/egrant/NED/.env"
 sweep_name: "offgrid-baseline"
 re_plant_capacity_multiplier: 0.5
