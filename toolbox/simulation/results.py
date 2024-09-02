@@ -184,12 +184,14 @@ class PhysicsResults(FromDictMixin):
     electrolyzer_LTA: Optional[pd.DataFrame] = field(default = None)
     timeseries: Optional[dict] = field(default = {})
     h2_design_results: Optional[dict] = field(default = {})
+    ancillary_power_info: Optional[dict] = field(default = {})
 
     def __attrs_post_init__(self):
         self.timeseries = {}
         self.h2_results = {}
         self.renewables_summary = {}
         self.h2_design_results = {}
+        self.ancillary_power_info = {}
         self.electrolyzer_LTA = pd.DataFrame()
 
         self.renewables_summary, self.renewable_plant_design_type = summarize_renewables_info(self.hopp_results["hybrid_plant"])
@@ -261,7 +263,11 @@ class PhysicsResults(FromDictMixin):
         # dict(zip(new_keys,list(self.h2_storage_results.values())))
 
         # self.h2_storage_results[self.h2_storage_type] = 
-    
+    def add_ancillary_power_results(self,ancillary_power_desc,ancillary_power_val):
+        # if self.ancillary_power_info == {}:
+        #     self.ancillary_power_info = {ancillary_power_desc:ancillary_power_val}
+        # else:
+        self.ancillary_power_info.update({ancillary_power_desc:ancillary_power_val})
     def get_physics_summary(self):
         #TODO: update this
         d = self.as_dict()

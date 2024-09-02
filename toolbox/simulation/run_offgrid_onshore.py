@@ -24,8 +24,9 @@ import toolbox.simulation.greenheart_management as gh_mgmt
 import toolbox.tools.interface_tools as int_tool
 import copy
 import greenheart.tools.eco.hydrogen_mgmt as he_h2
+import greenheart.tools.eco.hopp_mgmt as he_hopp
 from toolbox.simulation.results import NedOutputs #, FinanceResults,PhysicsResults
-
+import numpy as np
 from toolbox.utilities.ned_logger import toolbox_logger as t_log
 
 def run_lcoh_lcoe(
@@ -245,7 +246,7 @@ def sweep_atb_cost_cases(
     for atb_cost_case in ned_man.atb_cases_desc:
         t_log.info("\t{} ATB Cost Case".format(atb_cost_case))
         hopp_results = gh_mgmt.update_hopp_costs(hopp_results,ned_man.atb_cost_cases_hopp[atb_cost_case])
-        
+
         electrolyzer_cost_results = gh_mgmt.update_electrolysis_costs(config.greenheart_config,electrolyzer_physics_results,ned_man.atb_cost_cases_electrolyzer[atb_cost_case])
         h2_prod_store_results[0] = electrolyzer_cost_results
         capex_breakdown, opex_breakdown_annual, fin_res = gh_mgmt.calc_capex_and_opex(
@@ -338,6 +339,7 @@ def sweep_plant_design_types(
         next_h2_storage_type = "lined_rock_cavern"
     renewable_plant_capacity_MWac = ned_man.electrolyzer_size_mw*ned_man.re_plant_capacity_multiplier
     if ned_man.re_plant_capacity_multiplier<1:
+        #TODO: fix this!
         # grid_min_size_kw = renewable_plant_capacity_MWac*1e3
         #in hopp_mangement, grid_interconnect_kw is set to power_for_peripherals_kw + electrolyzer_rating*1e3
         #in this case, we want grid_interconnect_kw = wind_rating_kw + pv_rating_kw + power_for_peripherals_kw
@@ -383,6 +385,33 @@ def sweep_plant_design_types(
         # hopp_config["technologies"]["grid"]["interconnect_kw"] = grid_min_size_kw + ancillary_power_usage_kw
         config,hi,wind_cost_results, hopp_results = gh_mgmt.set_up_greenheart_run_renewables(config,power_for_peripherals_kw=ancillary_power_for_grid_sizing_and_battery)
         # print("max power production: {}".format(max(hopp_results["combined_hybrid_power_production_hopp"])))
+        max_renewable_generation_kW = gh_mgmt.calculate_max_renewable_generation(hopp_results)
+        max_energy_for_h2_kW = np.min([max_renewable_generation_kW,ned_man.electrolyzer_size_mw*1e3])
+        # print("max energy for electrolysis: {} MW".format(max_energy_for_h2_kW/1e3))
+        ancillary_power_usage_kw = gh_mgmt.estimate_power_for_peripherals_kw_land_based(config.greenheart_config,max_energy_for_h2_kW,config.design_scenario)
+        if ancillary_power_usage_kw>0:
+            # print("Estimated ancillary power usage: {} MW".format(ancillary_power_usage_kw/1e3))
+            
+            
+            if include_battery:
+                
+                elec_min_power_kw = (config.greenheart_config["electrolyzer"]["turndown_ratio"]*ned_man.electrolyzer_size_mw)*1e3
+                # print("electrolyzer min power kW: {}".format(elec_min_power_kw))
+                
+                minimum_load_kW = ancillary_power_usage_kw + elec_min_power_kw
+                maximum_load_kW = max_energy_for_h2_kW + ancillary_power_usage_kw
+                minimum_load_kW = np.ceil(minimum_load_kW)
+                maximum_load_kW = np.ceil(maximum_load_kW)
+                # print("Desired Schcedule: {} MW".format(minimum_load_kW/1e3))
+                # print("Interconnect Limit {} MW".format(maximum_load_kW/1e3))
+                #TODO: check that setting interconnect to possibly below renewable capacity is OK
+                hopp_results = gh_mgmt.rerun_hopp_battery(
+                    hopp_results["hybrid_plant"],
+                    desired_schedule_kW=minimum_load_kW,
+                    interconnect_kW=maximum_load_kW)
+            
+            
+        
         ghg_res = gh_mgmt.run_physics_and_design(
             hopp_results = hopp_results,
             wind_cost_results = wind_cost_results,
@@ -393,8 +422,18 @@ def sweep_plant_design_types(
             turbine_config = config.turbine_config,
             power_for_peripherals_kw_in=ancillary_power_usage_kw)
         phys_res, electrolyzer_physics_results, hopp_results,h2_prod_store_results, h2_transport_results,offshore_component_results,total_accessory_power_renewable_kw = ghg_res
+        # if total_accessory_power_renewable_kw>0:
+        #     print("Actual ancillary power usage: {} MW".format(total_accessory_power_renewable_kw/1e3))
         
         phys_res.update_re_plant_type(re_plant_type=plant_desc)
+        if ancillary_power_usage_kw>0:
+            phys_res.add_ancillary_power_results("Estimated Ancillary Power Usage [kW]",ancillary_power_usage_kw)
+            phys_res.add_ancillary_power_results("Actual Ancillary Power Usage [kW]",total_accessory_power_renewable_kw)
+            phys_res.add_ancillary_power_results("Max Estimated Renewable Generation [kW]",max_renewable_generation_kW)
+            phys_res.add_ancillary_power_results("Max Energy for Electrolyzer [kW]",max_energy_for_h2_kW)
+            if include_battery:
+                phys_res.add_ancillary_power_results("Desired Schedule [kW]",minimum_load_kW)
+                phys_res.add_ancillary_power_results("Interconnect Size [kW]",maximum_load_kW)
         # phys_res.update_h2_design_scenario(h2_storage_type=[],h2_transport_type)
         ned_out.add_Physics_Results(phys_res)
 
@@ -403,7 +442,7 @@ def sweep_plant_design_types(
             ned_man,
             ned_out,
             plant_desc,
-            hopp_results, 
+            dict(hopp_results), 
             electrolyzer_physics_results,
             h2_prod_store_results, 
             h2_transport_results, 
@@ -416,6 +455,7 @@ def sweep_plant_design_types(
             new_h2_storage_type = next_h2_storage_type)
 
     end = time.perf_counter()
+    # print("{} min to run sim".format(round((end-start)/60,3)))
     t_log.info("{} min to run sim".format(round((end-start)/60,3)))
     return ned_out
        

@@ -15,6 +15,37 @@ import numpy as np
 from hopp.tools.analysis import create_cost_calculator
 import copy
 from toolbox.simulation.results import LCOHResults,LCOEResults,FinanceResults, PhysicsResults
+
+def calculate_max_renewable_generation(hopp_results):
+    hybrid_gen = np.zeros(8760)
+    non_dispatchable_systems = ['pv', 'wind','wave']
+    for system in hopp_results["hybrid_plant"].technologies.keys():
+        if system != "grid":
+            model = getattr(hopp_results["hybrid_plant"], system)
+            if model:
+                if system in non_dispatchable_systems:
+                    hybrid_gen += np.array(model.generation_profile)
+                else:
+                    hybrid_gen +=np.ones(8760)*model.system_capacity_kw
+
+    max_possible_power_production_kWac = np.max(hybrid_gen)
+    return max_possible_power_production_kWac
+
+def rerun_hopp_battery(hybrid_plant,desired_schedule_kW,interconnect_kW, curtailment_value_type = "grid"):
+
+    hybrid_plant.grid.site.curtailment_value_type = curtailment_value_type
+    hybrid_plant.dispatch_builder.power_sources["grid"].site.curtailment_value_type = curtailment_value_type
+    hybrid_plant = he_hopp.rerun_battery_dispatch(hybrid_plant,desired_schedule_kW,interconnect_kW,project_life = 2)
+    
+    new_hopp_res = {
+        "hybrid_plant":hybrid_plant,
+        "combined_hybrid_power_production_hopp":hybrid_plant.grid._system_model.Outputs.system_pre_interconnect_kwac[0:8760],
+        "combined_hybrid_curtailment_hopp": hybrid_plant.grid.generation_curtailed,
+        "energy_shortfall_hopp": hybrid_plant.grid.missed_load,
+        "annual_energies": hybrid_plant.annual_energies
+    }
+    
+    return new_hopp_res 
 def set_up_greenheart_run_renewables(config:GreenHeartSimulationConfig,power_for_peripherals_kw = 0.0):
     
     config, hi, wind_cost_results = setup_greenheart_simulation(config=config,power_for_peripherals_kw=power_for_peripherals_kw)
