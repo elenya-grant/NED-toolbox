@@ -8,6 +8,8 @@ env_path: "/scratch/egrant/NED/.env"
 sweep_name: "offgrid-baseline"
 re_plant_capacity_multiplier: 1.0
 optimize_design: False
+site_resolution_km: 11.5
+run_battery_for_ancillary_power: True
 re_plant_types:
   wind: 1.0
   wind-battery: 1.0
@@ -15,7 +17,7 @@ re_plant_types:
   wind-pv-battery: 0.5
   pv: 1.0
   pv-battery: 1.0
-subsweep_name: "equal-sized"
+subsweep_name: "equal-sized" #"equal-sized-bothbatforancillary" #"equal-sized"
 output_dir: "/projects/hopp/ned-results/v1"
 hpc_resource_info:
   wtk_source_path: "/kfs2/datasets/WIND/conus/v1.0.0"
