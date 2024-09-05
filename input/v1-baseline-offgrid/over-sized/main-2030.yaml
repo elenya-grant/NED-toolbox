@@ -9,7 +9,8 @@ sweep_name: "offgrid-baseline"
 re_plant_capacity_multiplier: 1.5
 optimize_design: False
 site_resolution_km: 11.5
-run_battery_for_ancillary_power: True
+run_battery_for_ancillary_power: False
+ancillary_power_solver_method: "simple_solver" 
 re_plant_types:
   wind: 1.0
   wind-battery: 1.0
