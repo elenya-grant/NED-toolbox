@@ -26,6 +26,7 @@ import copy
 import greenheart.tools.eco.hydrogen_mgmt as he_h2
 import greenheart.tools.eco.hopp_mgmt as he_hopp
 from toolbox.simulation.results import NedOutputs #, FinanceResults,PhysicsResults
+from toolbox.simulation.results import ConfigTracker
 import numpy as np
 from toolbox.utilities.ned_logger import toolbox_logger as t_log
 
@@ -243,6 +244,7 @@ def sweep_atb_cost_cases(
     sweep_incentives = True,
     new_h2_storage_type = None,
     ):
+    
     for atb_cost_case in ned_man.atb_cases_desc:
         t_log.info("\t{} ATB Cost Case".format(atb_cost_case))
         hopp_results = gh_mgmt.update_hopp_costs(hopp_results,ned_man.atb_cost_cases_hopp[atb_cost_case])
@@ -259,6 +261,11 @@ def sweep_atb_cost_cases(
         fin_res.update_atb_scenario(atb_cost_case)
         fin_res.update_re_plant_type(re_plant_desc)
         ned_out.add_Finance_Results(fin_res)
+        gh_cfg = ConfigTracker(
+            config=config,
+            atb_scenario = atb_cost_case,
+            re_plant_type = re_plant_desc)
+        ned_out.add_GreenHEART_Config(gh_cfg)
         ned_out = run_lcoh_lcoe(
             ned_out,
             config,

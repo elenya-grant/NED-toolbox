@@ -11,7 +11,11 @@ from toolbox.simulation.ned_simulation_outputs import summarize_renewables_info
 from typing import List, Sequence, Optional, Union
 from toolbox.simulation.ned_base import BaseClassNed
 from hopp.type_dec import FromDictMixin
-
+import dill
+from greenheart.simulation.greenheart_simulation import (
+    GreenHeartSimulationConfig,
+)
+import attrs
 @define
 class LCOHResults(FromDictMixin):
     lcoh_pf: ProFAST
@@ -60,6 +64,7 @@ class LCOHResults(FromDictMixin):
 
         d = self.as_dict()
         summary = {k:v for k,v in d.items() if k!="lcoh_pf"}
+        # summary = {k:v for k,v in d.items() if k!="lcoh_pf_config"}
         if not save_cost_breakdown:
             summary = {k:v for k,v in summary.items() if k!="lcoh_cost_breakdown"}
 
@@ -327,6 +332,29 @@ class PhysicsResults(FromDictMixin):
             self.h2_design_results[key_desc].update(compressor_summary)
 
 
+@define
+class ConfigTracker(FromDictMixin):
+    config: GreenHeartSimulationConfig
+    # atb_year: int
+    atb_scenario: str
+    re_plant_type: str
+    policy_scenario: Optional[Union[str,int]]  = field(default=None)
+
+    atb_year: Optional[int] = field(default=None)
+    h2_storage_type: Optional[str] = field(default=None)
+    h2_transport_design: Optional[str] = field(default=None)
+    def __attrs_post_init__(self):
+        self.h2_storage_type = self.config.greenheart_config["h2_storage"]["type"]
+        plant_design_num = self.config.plant_design_scenario
+        self.h2_transport_design = self.config.greenheart_config["plant_design"]["scenario{}".format(plant_design_num)]["transportation"]
+        self.atb_year = self.config.greenheart_config["project_parameters"]["atb_year"]
+        self.policy_scenario = self.config.incentive_option
+    def get_config_results(self):
+        d = self.as_dict()
+        summary = {k:v for k,v in d.items()}
+        summary.update({"config":attrs.asdict(self.config)})
+        return summary
+        
 
 @define
 class NedOutputs(BaseClassNed):
@@ -343,6 +371,7 @@ class NedOutputs(BaseClassNed):
     LCOE_Res: List[LCOEResults] = field(init = False)
     Finance_Res: List[FinanceResults] = field(init = False)
     Physics_Res: List[PhysicsResults] = field(init = False)
+    Config_Res: List[ConfigTracker] = field(init = False)
     
     save_summary_results: Optional[bool] = field(default = True)
     save_summary_separately: Optional[bool] = field(default = False)
@@ -367,6 +396,7 @@ class NedOutputs(BaseClassNed):
         self.LCOE_Res = []
         self.Finance_Res = []
         self.Physics_Res = []
+        self.Config_Res = []
         if "summary_results" in self.save_data_info:
             self.save_summary_results = self.save_data_info["save_summary_results"]["flag"]
             self.save_summary_separately = self.save_data_info["save_summary_results"]["save_separately"]
@@ -399,6 +429,9 @@ class NedOutputs(BaseClassNed):
     def add_Physics_Results(self,phy_res:PhysicsResults):
         self.Physics_Res.append(phy_res)
 
+    def add_GreenHEART_Config(self,gh_config:ConfigTracker):
+        self.Config_Res.append(gh_config)
+
     def make_LCOH_summary_results(self):
         temp = [pd.Series(self.LCOH_Res[i].get_lcoh_summary()) for i in range(len(self.LCOH_Res))]
         return pd.DataFrame(temp)
@@ -426,7 +459,11 @@ class NedOutputs(BaseClassNed):
     def make_Physics_detailed_results(self, save_wind_solar_generation):
         temp = [pd.Series(self.Physics_Res[i].get_physics_timeseries(save_wind_solar_timeseries=save_wind_solar_generation)) for i in range(len(self.Physics_Res))]
         return pd.DataFrame(temp)
-
+    
+    def make_GH_Config_results(self):
+        temp = [pd.Series(self.Config_Res[i].get_config_results()) for i in range(len(self.Config_Res))]
+        return pd.DataFrame(temp)
+    
     def write_output_summary(self,output_dir:str):
         # self.saved_num +=1
         # output_filepath_root = os.path.join(output_dir,"{}-{}_{}-{}-{}_{}".format(self.site.id,self.site.latitude,self.site.longitude,self.site.state,self.site.county,self.extra_desc))
@@ -454,13 +491,24 @@ class NedOutputs(BaseClassNed):
         lcoh_res = self.make_LCOH_detailed_results()
         lcoe_res = self.make_LCOE_detailed_results()
         phys_res = self.make_Physics_detailed_results(save_wind_solar_generation)
-        
+        gh_res = self.make_GH_Config_results()
 
         if self.save_detailed_separately:
             # site_res.to_pickle(output_filepath_root + "--Site_Info.pkl")
+            # lcoh_output_filepath = output_filepath_root + "--LCOH_ProFAST.pkl"
+            # with open(lcoh_output_filepath,"wb") as f:
+            #     dill.dump(lcoh_res,f)
             lcoh_res.to_pickle(output_filepath_root + "--LCOH_Detailed.pkl")
             lcoe_res.to_pickle(output_filepath_root + "--LCOE_Detailed.pkl")
+            # lcoe_output_filepath = output_filepath_root + "--LCOE_ProFAST.pkl"
+            # with open(lcoe_output_filepath,"wb") as f:
+            #     dill.dump(lcoe_res,f)
+
             phys_res.to_pickle(output_filepath_root + "--Physics_Timeseries.pkl")
+
+            config_output_filepath = output_filepath_root + "--GH_Config.pkl"
+            with open(config_output_filepath,"wb") as f:
+                dill.dump(gh_res,f)
             # fin_res.to_pickle(output_filepath_root + "--Financial_Summary.pkl")
         else:
             res = {"Site":site_res,"LCOH":lcoh_res,"LCOE":lcoe_res,"Physics":phys_res}
@@ -478,8 +526,14 @@ class NedOutputs(BaseClassNed):
             if self.save_detailed_LCOE:
                 lcoe_res = self.make_LCOE_detailed_results()
                 lcoe_res.to_pickle(output_filepath_root + "--LCOE_Detailed.pkl")
+                # lcoe_output_filepath = output_filepath_root + "--LCOE_ProFAST.pkl"
+                # with open(lcoe_output_filepath,"wb") as f:
+                #     dill.dump(lcoe_res,f)
             if self.save_detailed_LCOH:
                 lcoh_res = self.make_LCOH_detailed_results()
+                # lcoh_output_filepath = output_filepath_root + "--LCOH_ProFAST.pkl"
+                # with open(lcoh_output_filepath,"wb") as f:
+                #     dill.dump(lcoh_res,f)
                 lcoh_res.to_pickle(output_filepath_root + "--LCOH_Detailed.pkl")
             if self.save_timeseries:
                 phys_res = self.make_Physics_detailed_results(save_wind_solar_generation)
