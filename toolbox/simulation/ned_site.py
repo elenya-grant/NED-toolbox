@@ -8,6 +8,8 @@ from hopp.utilities.validators import contains, range_val, gt_zero
 from attrs import define, field
 from hopp.simulation.technologies.pv.pv_plant import PVConfig
 import copy
+from toolbox.utilities.yaml_tools import write_yaml
+import os
 @define
 class Site(BaseClassNed):
     latitude: hopp_float_type = field(converter = hopp_float_type)
@@ -56,6 +58,7 @@ class NedManager(BaseClassNed):
     resource_year: Optional[int] = field(default = 2013, validator=range_val(2007, 2014))
     site_resolution_km: Optional[float] = field(default = 11.5)
     run_battery_for_ancillary_power: Optional[bool] = field(default = True)
+    ancillary_power_solver_method: Optional[str] = field(default = "simple_solver", validator=contains(["simple_solver","estimate"]))
 
     dc_ac_ratio: Optional[float] = field(default = None)
     turbine_size_mw: Optional[float] = field(default = None)
@@ -104,4 +107,6 @@ class NedManager(BaseClassNed):
         wind_tech.pop("num_turbines")
         self.__setattr__("wind_technologies_config_default",wind_tech)
        
-
+    def export_to_yaml(self):
+        output_filename = os.path.join(self.output_directory,"ned_manager.yaml")
+        write_yaml(output_filename,data = self.as_dict())

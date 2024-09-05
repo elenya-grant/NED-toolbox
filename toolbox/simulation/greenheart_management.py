@@ -318,7 +318,89 @@ def run_physics_and_design(
         total_accessory_power_renewable_kw
     )
     
+def solve_for_ancillary_power_and_run(
+    hopp_results,
+    wind_cost_results,
+    design_scenario,
+    orbit_config,
+    hopp_config,
+    greenheart_config,
+    turbine_config,
+    power_for_peripherals_kw_inital_guess = 0.0,
+    ):
+
+    def energy_internals(
+        hopp_results = hopp_results,
+        wind_cost_results = wind_cost_results,
+        design_scenario = design_scenario,
+        orbit_config = orbit_config,
+        hopp_config = hopp_config,
+        greenheart_config = greenheart_config,
+        turbine_config = turbine_config,
+        solver = True,
+        power_for_peripherals_kw_in = power_for_peripherals_kw_inital_guess,
+        ):
+        
+        (
+            phy_res,
+            electrolyzer_physics_results,
+            hopp_results,
+            h2_prod_store_results,
+            h2_transport_results,
+            offshore_component_results,
+            total_accessory_power_renewable_kw,
+        ) = run_physics_and_design(
+            hopp_results,
+            wind_cost_results,
+            design_scenario,
+            orbit_config,
+            hopp_config,
+            greenheart_config,
+            turbine_config,
+            power_for_peripherals_kw_in
+            )
+        if solver:
+            return total_accessory_power_renewable_kw
+        else:
+            return (
+                phy_res,
+                electrolyzer_physics_results,
+                hopp_results,
+                h2_prod_store_results,
+                h2_transport_results,
+                offshore_component_results,
+                total_accessory_power_renewable_kw,
+            )
+        
+    def simple_solver(initial_guess = 0.0):
+        total_accessory_power_renewable_kw = energy_internals(
+            power_for_peripherals_kw_in=initial_guess,
+            solver = True)
+        return [total_accessory_power_renewable_kw]
+    solver_results = simple_solver(0)
+    solver_result = solver_results[0]
+    (
+        phy_res,
+        electrolyzer_physics_results,
+        hopp_results,
+        h2_prod_store_results,
+        h2_transport_results,
+        offshore_component_results,
+        total_accessory_power_renewable_kw,
+    ) = energy_internals(solver=False, power_for_peripherals_kw_in=solver_result)
+
+    return (
+        phy_res,
+        electrolyzer_physics_results,
+        hopp_results,
+        h2_prod_store_results,
+        h2_transport_results,
+        offshore_component_results,
+        total_accessory_power_renewable_kw
+    )
     
+
+
 def calc_capex_and_opex(hopp_results, h2_prod_store_results, h2_transport_results, offshore_component_results, config:GreenHeartSimulationConfig):
     electrolyzer_cost_results, h2_storage_results = h2_prod_store_results
     h2_pipe_array_results, h2_transport_compressor_results, h2_transport_pipe_results = h2_transport_results

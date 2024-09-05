@@ -379,15 +379,19 @@ def sweep_plant_design_types(
         hopp_config = int_tool.update_hopp_config_for_solar_capacity(pv_capacity_mwac,ned_man,hopp_config)
         hopp_config = int_tool.update_hopp_config_for_battery(include_battery,ned_man,hopp_config)
         config.hopp_config = hopp_config
-        ancillary_power_usage_kw = gh_mgmt.estimate_power_for_peripherals_kw_land_based(config.greenheart_config,renewable_plant_capacity_MWac*1e3,config.design_scenario)
+        if ned_man.run_battery_for_ancillary_power:
+            ancillary_power_usage_kw = gh_mgmt.estimate_power_for_peripherals_kw_land_based(config.greenheart_config,renewable_plant_capacity_MWac*1e3,config.design_scenario)
+        else:
+            ancillary_power_usage_kw = 0.0
         # below is done in hopp_mgmt.setup_hopp
-        ancillary_power_for_grid_sizing_and_battery = ancillary_power_usage_kw + adjustment_ancillary_power_usage_kw
+        # ancillary_power_for_grid_sizing_and_battery = ancillary_power_usage_kw + adjustment_ancillary_power_usage_kw
         # hopp_config["technologies"]["grid"]["interconnect_kw"] = grid_min_size_kw + ancillary_power_usage_kw
-        config,hi,wind_cost_results, hopp_results = gh_mgmt.set_up_greenheart_run_renewables(config,power_for_peripherals_kw=ancillary_power_for_grid_sizing_and_battery)
+        config,hi,wind_cost_results, hopp_results = gh_mgmt.set_up_greenheart_run_renewables(config,power_for_peripherals_kw=ancillary_power_usage_kw)
         # print("max power production: {}".format(max(hopp_results["combined_hybrid_power_production_hopp"])))
         max_renewable_generation_kW = gh_mgmt.calculate_max_renewable_generation(hopp_results)
         max_energy_for_h2_kW = np.min([max_renewable_generation_kW,ned_man.electrolyzer_size_mw*1e3])
         # print("max energy for electrolysis: {} MW".format(max_energy_for_h2_kW/1e3))
+        
         ancillary_power_usage_kw = gh_mgmt.estimate_power_for_peripherals_kw_land_based(config.greenheart_config,max_energy_for_h2_kW,config.design_scenario)
         # if ancillary_power_usage_kw>0:
             # print("Estimated ancillary power usage: {} MW".format(ancillary_power_usage_kw/1e3))
@@ -408,17 +412,27 @@ def sweep_plant_design_types(
                 desired_schedule_kW=minimum_load_kW,
                 interconnect_kW=maximum_load_kW)
             
-            
-        
-        ghg_res = gh_mgmt.run_physics_and_design(
-            hopp_results = hopp_results,
-            wind_cost_results = wind_cost_results,
-            design_scenario = config.design_scenario,
-            orbit_config = config.orbit_config,
-            hopp_config = config.hopp_config,
-            greenheart_config = config.greenheart_config,
-            turbine_config = config.turbine_config,
-            power_for_peripherals_kw_in=ancillary_power_usage_kw)
+        if ned_man.ancillary_power_solver_method == "simple_solver":
+            ghg_res = gh_mgmt.solve_for_ancillary_power_and_run(
+                hopp_results = hopp_results,
+                wind_cost_results = wind_cost_results,
+                design_scenario = config.design_scenario,
+                orbit_config = config.orbit_config,
+                hopp_config = config.hopp_config,
+                greenheart_config = config.greenheart_config,
+                turbine_config = config.turbine_config,
+                power_for_peripherals_kw_inital_guess=0.0
+                )
+        elif ned_man.ancillary_power_solver_method == "estimate":
+            ghg_res = gh_mgmt.run_physics_and_design(
+                hopp_results = hopp_results,
+                wind_cost_results = wind_cost_results,
+                design_scenario = config.design_scenario,
+                orbit_config = config.orbit_config,
+                hopp_config = config.hopp_config,
+                greenheart_config = config.greenheart_config,
+                turbine_config = config.turbine_config,
+                power_for_peripherals_kw_in=ancillary_power_usage_kw)
         phys_res, electrolyzer_physics_results, hopp_results,h2_prod_store_results, h2_transport_results,offshore_component_results,total_accessory_power_renewable_kw = ghg_res
         # if total_accessory_power_renewable_kw>0:
         #     print("Actual ancillary power usage: {} MW".format(total_accessory_power_renewable_kw/1e3))
@@ -688,12 +702,13 @@ def setup_runs(input_config):
         electrolyzer_size_mw=electrolyzer_size_mw,
         resource_year=resource_year,
         site_resolution_km=input_config["site_resolution_km"],
-        run_battery_for_ancillary_power=input_config["run_battery_for_ancillary_power"])
+        run_battery_for_ancillary_power=input_config["run_battery_for_ancillary_power"],
+        ancillary_power_solver_method=input_config["ancillary_power_solver_method"])
 
     config = GreenHeartSimulationConfig(**config_input_dict)
     ned_manager.set_renewable_specs(config)
     ned_manager.set_default_hopp_technologies(config.hopp_config["technologies"])
-
+    ned_manager.export_to_yaml() #save ned man
     input_data = [config_input_dict,ned_output_config_dict,ned_manager.as_dict()]
     return site_list, input_data
 
@@ -715,6 +730,7 @@ if __name__ == "__main__":
     site_list, inputs = setup_runs(input_config)
     config_input_dict,ned_output_config_dict,ned_man = inputs
     print(ned_man["output_directory"])
+    
     run_baseline_site(
         site_list.iloc[site_id].to_dict(),
         config_input_dict,
