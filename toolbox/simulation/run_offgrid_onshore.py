@@ -29,6 +29,7 @@ from toolbox.simulation.results import NedOutputs #, FinanceResults,PhysicsResul
 from toolbox.simulation.results import ConfigTracker
 import numpy as np
 from toolbox.utilities.ned_logger import toolbox_logger as t_log
+from hopp.simulation.technologies.sites import SiteInfo
 
 def run_lcoh_lcoe(
     ned_out: NedOutputs,
@@ -330,11 +331,14 @@ def sweep_plant_design_types(
     config:GreenHeartSimulationConfig,
     ned_man: NedManager,
     ned_out: NedOutputs,
+    hopp_site_main = None
     # verbose = True
     ):
     total_accessory_power_grid_kw = 0.0 #always zero for non-pressurized storage
     start = time.perf_counter()
     t_log.info("({},{}) --- {},{}".format(ned_site.latitude,ned_site.longitude,ned_site.state,ned_site.county))
+    if hopp_site_main is None:
+        hopp_site_main = SiteInfo(**config.hopp_config["site"]) #TODO: update this
     
     if ned_man.baseline_h2_storage_type == "none":
         next_h2_storage_type = "pipe"
@@ -385,6 +389,7 @@ def sweep_plant_design_types(
         hopp_config = int_tool.update_hopp_config_for_wind_capacity(wind_capacity_mw,ned_man,hopp_config)
         hopp_config = int_tool.update_hopp_config_for_solar_capacity(pv_capacity_mwac,ned_man,hopp_config)
         hopp_config = int_tool.update_hopp_config_for_battery(include_battery,ned_man,hopp_config)
+        hopp_config = int_tool.update_hopp_site_for_case(pv_capacity_mwac,wind_capacity_mw,hopp_site_main.wind_resource,hopp_site_main.solar_resource,hopp_config)
         config.hopp_config = hopp_config
         if ned_man.run_battery_for_ancillary_power:
             ancillary_power_usage_kw = gh_mgmt.estimate_power_for_peripherals_kw_land_based(config.greenheart_config,renewable_plant_capacity_MWac*1e3,config.design_scenario)
@@ -550,12 +555,15 @@ def run_baseline_site(site_info,config_input_dict,ned_output_config_dict,ned_man
         config=config,
         ned_man = ned_man,
         )
+    
+    hopp_site = SiteInfo(**config.hopp_config["site"])
     # sweep everything with none and pipe h2 storage
     ned_res = sweep_plant_design_types(
         ned_site=ned_site,
         config = copy.deepcopy(config),
         ned_man=ned_man,
-        ned_out=ned_out)
+        ned_out=ned_out,
+        hopp_site_main = hopp_site)
     # ned_res.write_outputs(output_dir = ned_man.output_directory,save_separately=False)
     ned_res.write_outputs(output_dir = ned_man.output_directory,save_wind_solar_generation = True)
 
@@ -574,7 +582,8 @@ def run_baseline_site(site_info,config_input_dict,ned_output_config_dict,ned_man
         ned_site=ned_site,
         config = copy.deepcopy(config),
         ned_man=ned_man,
-        ned_out=ned_out)
+        ned_out=ned_out,
+        hopp_site_main = hopp_site)
     
     ned_res.write_outputs(output_dir = ned_man.output_directory, save_wind_solar_generation = False)
     

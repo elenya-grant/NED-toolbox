@@ -43,3 +43,22 @@ def update_hopp_config_for_battery(include_battery,ned_man:NedManager,hopp_confi
         if "battery" in hopp_config_bat["technologies"]:
             hopp_config_bat["technologies"].pop("battery")
     return hopp_config_bat
+
+def update_hopp_site_for_case(pv_capacity_mwac,wind_capacity_mw,wind_resource,solar_resource,hopp_config):
+    hopp_config_site = copy.deepcopy(hopp_config)
+    if pv_capacity_mwac>0:
+        hopp_config_site["site"]["solar"] = True
+        hopp_config_site["site"].update({"solar_resource":solar_resource})
+    else:
+        hopp_config_site["site"]["solar"] = False
+        if "solar_resource" in hopp_config_site["site"]:
+            hopp_config_site["site"].pop("solar_resource")
+    if wind_capacity_mw>0:
+        hopp_config_site["site"]["wind"] = True
+        hopp_config_site["site"].update({"wind_resource":wind_resource})
+    else:
+        hopp_config_site["site"]["wind"] = False
+        if "wind_resource" in hopp_config_site:
+            hopp_config_site["site"].pop("wind_resource")
+    hopp_config_site["site"]["data"].update({"tz":solar_resource.data["tz"]})
+    return hopp_config_site
