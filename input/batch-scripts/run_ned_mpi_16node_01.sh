@@ -10,8 +10,8 @@
 #SBATCH --account=hopp
 #SBATCH --mail-user egrant@nrel.gov
 #SBATCH --mail-type BEGIN,END,FAIL
-module load openmpi/4.1.6-gcc gcc-stdalone/13.1.0
 module load conda
 conda activate /scratch/egrant/ned_tools
+module load cray-mpich
 export TMPDIR=/scratch/egrant/sc_tmp/
 srun -N 16 --ntasks-per-node=104 /scratch/egrant/ned_tools/bin/python /scratch/egrant/NED-toolbox/toolbox/simulation/run_offgrid_onshore_baseline_mpi.py 14810 35272
