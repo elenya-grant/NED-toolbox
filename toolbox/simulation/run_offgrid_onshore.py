@@ -433,7 +433,7 @@ def sweep_plant_design_types(
                 hopp_config = config.hopp_config,
                 greenheart_config = config.greenheart_config,
                 turbine_config = config.turbine_config,
-                power_for_peripherals_kw_in=0.0
+                power_for_peripherals_kw_inital_guess=0.0
                 )
         elif ned_man.ancillary_power_solver_method == "estimate":
             ghg_res = gh_mgmt.run_physics_and_design(
