@@ -28,9 +28,9 @@ import greenheart.tools.eco.hopp_mgmt as he_hopp
 from toolbox.simulation.results import NedOutputs #, FinanceResults,PhysicsResults
 from toolbox.simulation.results import ConfigTracker
 import numpy as np
-from toolbox.utilities.ned_logger import toolbox_logger as t_log
+# from toolbox.utilities.ned_logger import toolbox_logger as t_log
 from hopp.simulation.technologies.sites import SiteInfo
-
+from toolbox.utilities.ned_logger import site_logger as slog
 def run_lcoh_lcoe(
     ned_out: NedOutputs,
     config:GreenHeartSimulationConfig,
@@ -46,10 +46,10 @@ def run_lcoh_lcoe(
     calc_lcoe = True,
     calc_lcoh = True,
     ):
-    t_log.info("\t{} Plant".format(re_plant_desc))
-    t_log.info("\t{} ATB Cost Case".format(atb_cost_case))
-    t_log.info("\t{} H2 Storage".format(config.greenheart_config["h2_storage"]["type"]))
-    t_log.info("tax incentive {}".format(config.incentive_option))
+    #t_log.info("\t{} Plant".format(re_plant_desc))
+    #t_log.info("\t{} ATB Cost Case".format(atb_cost_case))
+    #t_log.info("\t{} H2 Storage".format(config.greenheart_config["h2_storage"]["type"]))
+    #t_log.info("tax incentive {}".format(config.incentive_option))
     if calc_lcoe:
         lcoe, pf_lcoe, lcoe_res = gh_mgmt.calc_lcoe(
                     hopp_results,
@@ -60,7 +60,7 @@ def run_lcoh_lcoe(
         lcoe_res.update_atb_scenario(atb_scenario=atb_cost_case)
         lcoe_res.update_re_plant_type(re_plant_type=re_plant_desc)
         ned_out.add_LCOE_Results(lcoe_res)
-        t_log.info("\t\tLCOE: \t${}/MWh".format(round(lcoe*1e3,2)))
+        #t_log.info("\t\tLCOE: \t${}/MWh".format(round(lcoe*1e3,2)))
     if calc_lcoh:
         lcoh, pf_lcoh, lcoh_res = gh_mgmt.calc_offgrid_lcoh(
             hopp_results,
@@ -76,7 +76,7 @@ def run_lcoh_lcoe(
         lcoh_res.update_re_plant_type(re_plant_type=re_plant_desc)
         ned_out.add_LCOH_Results(lcoh_res)
         
-        t_log.info("\t\tLCOH: \t${}/kg".format(round(lcoh,3)))
+        #t_log.info("\t\tLCOH: \t${}/kg".format(round(lcoh,3)))
     return ned_out
 
 
@@ -101,7 +101,7 @@ def sweep_policy_cases(
     #don't repeat incentive that would'ce already been run
     incentives_list = [k for k in incentives_list if k.split("option")[-1] != str(config.incentive_option)]
     for incentive_key in incentives_list:
-        # t_log.info("tax incentive: {}".format(incentive_key))
+        # #t_log.info("tax incentive: {}".format(incentive_key))
         incentive_num = int(incentive_key.split("option")[-1])
         config.incentive_option = incentive_num
         ned_out = run_lcoh_lcoe(
@@ -142,7 +142,7 @@ def run_costs_for_different_h2_storage_type(
 
 ):  
     # print("H2 Storage Type: {}".format(new_h2_storage_type))
-    t_log.info("H2 storage type: {}".format(new_h2_storage_type))
+    #t_log.info("H2 storage type: {}".format(new_h2_storage_type))
     h2_storage_type_id = [k for k in list(ned_man.h2_system_types.keys()) if ned_man.h2_system_types[k]["h2_storage_type"] == new_h2_storage_type]
     plant_design_id = ned_man.h2_system_types[h2_storage_type_id[0]]["plant_design_num"]
     
@@ -247,7 +247,7 @@ def sweep_atb_cost_cases(
     ):
     
     for atb_cost_case in ned_man.atb_cases_desc:
-        t_log.info("\t{} ATB Cost Case".format(atb_cost_case))
+        #t_log.info("\t{} ATB Cost Case".format(atb_cost_case))
         hopp_results = gh_mgmt.update_hopp_costs(hopp_results,ned_man.atb_cost_cases_hopp[atb_cost_case])
 
         electrolyzer_cost_results = gh_mgmt.update_electrolysis_costs(config.greenheart_config,electrolyzer_physics_results,ned_man.atb_cost_cases_electrolyzer[atb_cost_case])
@@ -335,8 +335,8 @@ def sweep_plant_design_types(
     # verbose = True
     ):
     total_accessory_power_grid_kw = 0.0 #always zero for non-pressurized storage
-    start = time.perf_counter()
-    t_log.info("({},{}) --- {},{}".format(ned_site.latitude,ned_site.longitude,ned_site.state,ned_site.county))
+    
+    #t_log.info("({},{}) --- {},{}".format(ned_site.latitude,ned_site.longitude,ned_site.state,ned_site.county))
     if hopp_site_main is None:
         hopp_site_main = SiteInfo(**config.hopp_config["site"]) #TODO: update this
     
@@ -360,10 +360,10 @@ def sweep_plant_design_types(
         # grid_min_size_kw = ned_man.electrolyzer_size_mw*1e3
         adjustment_ancillary_power_usage_kw = 0
 
-    t_log.info("renewable plant generation capacity: {} MW-AC".format(renewable_plant_capacity_MWac))
+    #t_log.info("renewable plant generation capacity: {} MW-AC".format(renewable_plant_capacity_MWac))
 
     for plant_desc, gen_mult in ned_man.re_plant_types.items():
-        t_log.info("plant-type: {}".format(plant_desc))
+        #t_log.info("plant-type: {}".format(plant_desc))
         # if verbose:
         # print("----- {} ------".format(plant_desc))
         hopp_config = copy.deepcopy(config.hopp_config)
@@ -479,9 +479,8 @@ def sweep_plant_design_types(
             sweep_incentives = True,
             new_h2_storage_type = next_h2_storage_type)
 
-    end = time.perf_counter()
-    # print("{} min to run sim".format(round((end-start)/60,3)))
-    t_log.info("{} min to run sim".format(round((end-start)/60,3)))
+    
+    #t_log.info("{} min to run sim".format(round((end-start)/60,3)))
     return ned_out
        
 def update_config_for_baseline_cases(
@@ -533,6 +532,8 @@ def check_config_values(
     return config
 
 def run_baseline_site(site_info,config_input_dict,ned_output_config_dict,ned_man_dict):
+    start = time.perf_counter()
+    slog.info("Site {}: starting baseline site run".format(site_info["id"]))
     ned_site = Site.from_dict(site_info)
     ned_output_config_dict.update({"site":ned_site})
     ned_output_config_dict.update({"extra_desc":"onsite_storage"})
@@ -555,8 +556,9 @@ def run_baseline_site(site_info,config_input_dict,ned_output_config_dict,ned_man
         config=config,
         ned_man = ned_man,
         )
-    
+    slog.info("Site {}: ready to start".format(site_info["id"]))
     hopp_site = SiteInfo(**config.hopp_config["site"])
+    slog.info("Site {}: made hopp site".format(site_info["id"]))
     # sweep everything with none and pipe h2 storage
     ned_res = sweep_plant_design_types(
         ned_site=ned_site,
@@ -565,8 +567,9 @@ def run_baseline_site(site_info,config_input_dict,ned_output_config_dict,ned_man
         ned_out=ned_out,
         hopp_site_main = hopp_site)
     # ned_res.write_outputs(output_dir = ned_man.output_directory,save_separately=False)
+    slog.info("Site {}: swept first set of plant designs".format(site_info["id"]))
     ned_res.write_outputs(output_dir = ned_man.output_directory,save_wind_solar_generation = True)
-
+    slog.info("Site {}: saved half of outputs".format(site_info["id"]))
     ned_man.baseline_h2_storage_type = "lined_rock_cavern"
     
     #reset outputs for geologic storage
@@ -577,16 +580,22 @@ def run_baseline_site(site_info,config_input_dict,ned_output_config_dict,ned_man
         config=config,
         ned_man = ned_man,
         )
-
+    slog.info("Site {}: starting second sweep of plant designs".format(site_info["id"]))
     ned_res = sweep_plant_design_types(
         ned_site=ned_site,
         config = copy.deepcopy(config),
         ned_man=ned_man,
         ned_out=ned_out,
         hopp_site_main = hopp_site)
-    
+    slog.info("Site {}: completed second sweep of plant designs".format(site_info["id"]))
     ned_res.write_outputs(output_dir = ned_man.output_directory, save_wind_solar_generation = False)
-    
+    slog.info("Site #{}: saved all outputs".format(site_info["id"]))
+    end = time.perf_counter()
+    sim_time = round((end-start)/60,3)
+    slog.info("Site {}: {} min to run".format(site_info["id"],sim_time))
+    run_str = "start_time: {} \n simulation time: {} min".format(start,sim_time)
+    # print("{} min to run sim".format(round((end-start)/60,3)))
+    return run_str
 
 def run_single_design(site_info):
     pass
@@ -730,7 +739,7 @@ def setup_runs(input_config):
 
 if __name__ == "__main__":
     start = time.perf_counter()
-    site_id = 5
+    site_id = 40
     atb_year = 2030
     version_num = 1
     sweep_name = "baseline-offgrid"
