@@ -133,86 +133,11 @@ def run_site_optimization(site_info,site_simplex,ned_manager_dict,config_input_d
         sim_time = round((end_time-start_time)/60,3)
         slog.info("{}: took {} min to completed optimization".format(ned_site.id,sim_time))
     
-def old_run_site_optimization(site_info,site_simplex,ned_manager_dict,config_input_dict,ned_output_config_dict,optimization_config):
-    print("here")
-    # create objects for simulations
-    hopp_site,ned_site,ned_man,ned_out,config = opt_tools.initialize_site_for_run(site_info,site_simplex,ned_manager_dict,config_input_dict,ned_output_config_dict,optimization_config)
-    # make optimization config
-    opt_config = opt_tools.make_optimization_config(optimization_config)
-    # run simulations to get simplex bounds
-    simplex_bounds,generation_profile_dict,hopp_results_example = opt_tools.get_simplex_for_bound_cases(hopp_site,ned_site,ned_man,ned_out,config)
-    # get unique combinations of wind and solar to run
-    print("ran bounded cases")
-    wind_sizes_init,pv_sizes_mwdc_init = opt_tools.get_wind_pv_initial_run_cases_list(opt_config,ned_site)
-    print("{} wind sizes to run for unique cases".format(len(wind_sizes_init)))
-    # add simplex of max/min bounds info to ned_site
-    ned_site.update_simplex_for_bounds(simplex_bounds)
-    # run unique combinations of wind and solar
-    print("starting init simplex runs")
-    start = time.perf_counter()
-    simplex_init = opt_tools.run_unique_wind_solar_sizes(wind_sizes_init,pv_sizes_mwdc_init,ned_out,ned_man,config,hopp_site,include_battery = False)
-    end = time.perf_counter()
-    sim_time = round((end-start)/60,3)
-    print("Took {} minutes to run unique wind and solar sizes {}".format(sim_time,len(wind_sizes_init)))
-    # add more simplex runs to ned_site
-    ned_site.update_simplex_for_bounds(simplex_init)
-    # print("ran bounds")
-    
-    # 4: add generation profiles to renewable generation tracker
-    REgen = RenewableGenerationTracker(example_hopp_results = hopp_results_example,generation_profiles=generation_profile_dict)
-    OptRes = OptimizationResults(site = ned_site)
-    opt_tracker = []
-    # 5: loop through plant designs
-    for re_plant_desc in opt_config.optimization_design_list:
-        # a. optimize design
-        print("starting to optimize {}".format(re_plant_desc))
-        start = time.perf_counter()
-        res = optimize_design(ned_site,ned_man,ned_out,config,hopp_site,re_plant_desc,OptRes,ned_site.simplex_case_info["h2_storage_type"])
-        if "battery" in re_plant_desc:
-            include_battery = True
-        else:
-            include_battery = False
-
-        ned_site.add_optimization_results(res,re_plant_desc)
-        wind_sizes,pv_sizes_mwdc = opt_tools.get_final_runs_to_check_optimal_results(opt_config,res,re_plant_desc)
-        simplex_optimal_results = opt_tools.run_unique_wind_solar_sizes(wind_sizes,pv_sizes_mwdc,ned_out,ned_man,config,hopp_site,include_battery = include_battery)
-        ned_site.update_simplex_for_bounds(simplex_optimal_results)
-        
-        idx_optimal = np.argmin(simplex_optimal_results["lcoh"].to_list())
-        optimal_wind_size = simplex_optimal_results["wind_size_mw"].loc[idx_optimal]
-        optimal_pv_sizedc = simplex_optimal_results["pv_size_mwdc"].loc[idx_optimal]
-        optimal_pv_sizeac = optimal_pv_sizedc/ned_man.dc_ac_ratio
-        opt_des = OptimalDesign(
-            optimization_design_desc=re_plant_desc,
-            wind_size_mw=optimal_wind_size,
-            pv_capacity_mwac=optimal_pv_sizeac,
-            include_battery=include_battery)
-        opt_tracker.append(opt_des)
-        
-        end = time.perf_counter()
-        sim_time = round((end-start)/60,3)
-        slog.info("Site {}: Took {} minutes to optimize {}".format(ned_site.id,sim_time,re_plant_desc))
-        # b. check newly optimized designs
-        # c. run cost cases for optimal design
-    opt_res = OptRes.make_Optimization_summary_results()
-    OptRes.save_Optimization_results(ned_man.output_directory)
-
-    ned_site.save_simplex(output_dir = ned_man.output_directory)
-    ned_out.write_outputs(output_dir = ned_man.output_directory, save_wind_solar_generation = False)
-    sweep_custom_plant_designs(site_info,
-            config_input_dict,
-            ned_output_config_dict,
-            ned_manager_dict,
-            hopp_site,
-            custom_plant_designs = opt_tracker)
-    
-    []
-    
+   
 if __name__=="__main__":
     atb_year = 2030
     input_filepath = INPUT_DIR/"v1-optimize-offgrid/main-{}.yaml".format(atb_year)
-    # optimization_filepath = INPUT_DIR/"v1-optimize-offgrid/optimize_config.yaml"
-    optimization_filepath = INPUT_DIR/"v1-optimize-offgrid/optimize_config_new.yaml"
+    optimization_filepath = INPUT_DIR/"v1-optimize-offgrid/optimize_config_{}.yaml".format(atb_year)
     input_config = load_yaml(input_filepath)
     optimization_config = load_yaml(optimization_filepath)
     input_config["hpc_or_local"] = "local"
@@ -227,40 +152,3 @@ if __name__=="__main__":
     else:
         site_simplex = None
     run_site_optimization(site_info,site_simplex,ned_manager_dict,config_input_dict,ned_output_config_dict,optimization_config,run_full_optimization=False)
-
-    # start_os.path.join(ned_manager_dict["output_directory"],"1-31.751_-103.821-Texas-2030-onsite_storage--")
-
-    # --- below was put into run_site_optimization function ---
-    # hopp_site,ned_site,ned_man,ned_out,config = opt_tools.initialize_site_for_run(site_info,site_simplex,ned_manager_dict,config_input_dict,ned_output_config_dict,optimization_config)
-    # start = time.perf_counter()
-    # simplex_bounds,generation_profiles = opt_tools.get_simplex_for_bound_cases(hopp_site,ned_site,ned_man,ned_out,config)
-    # ned_site.update_simplex_for_bounds(simplex_bounds)
-    # end = time.perf_counter()
-    # sim_time = round((end-start)/60,3)
-    # print("Took {} minutes get simplex".format(sim_time))
-    # print("starting optimization...")
-    # re_plant_types = ["wind","wind-pv","pv"]
-    # for re_plant in re_plant_types:
-    #     print("starting optimization for {}".format(re_plant))
-    #     opt_tstart = time.perf_counter()
-    #     res = optimize_design(ned_site,ned_man,ned_out,config,hopp_site,re_plant)
-    #     ned_site.add_optimization_results(res,re_plant)
-    #     opt_tend = time.perf_counter()
-    #     opt_time = round((opt_tend-opt_tstart)/60,3)
-    #     print("Took {} minutes run optimization for {}".format(opt_time,re_plant))
-    # output_filename = os.path.join(ned_man.output_directory,"{}--optimization_results_3plants.pkl".format(site_id))
-    # ned_site.opt_results.to_pickle(output_filename)
-    []
-    # --- above was put into run_site_optimization function ---
-    # ned_site.add_case_to_simplex()
-
-    # simplex_bounds.to_pickle(os.path.join(ned_man.output_directory,"{}--simplex_bounds_quick_run.pkl".format(site_id)))
-    # slow = pd.read_pickle(os.path.join(ned_man.output_directory,"{}--simplex_bounds_slow_run.pkl".format(site_id)))
-    # error = simplex_bounds[2:].reset_index(drop=True)-slow
-    # # quick_filepath = os.path.join(ned_man.output_directory,"{}--simplex_bounds_quick_run.pkl".format(site_id))
-    # # quick = pd.read_pickle(quick_filepath)
-    # # quick[2:].reset_index(drop=True)-simplex_bounds
-    # end = time.perf_counter()
-    # sim_time = round((end-start)/60,3)
-    # print("Took {} minutes to run".format(sim_time))
-    []

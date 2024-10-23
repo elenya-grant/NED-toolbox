@@ -30,11 +30,6 @@ from datetime import datetime
 from toolbox import ROOT_DIR
 from toolbox.utilities.ned_logger import mpi_logger as mpi_log
 from toolbox.utilities.ned_logger import main_logger as main_log
-# from toolbox.utilities.hpc_logger import create_log,create_log_filename
-# from toolbox.utilities.mpi_logger import mpi_logging as mpi_log
-# from toolbox.utilities.ned_logger import toolbox_logger as t_log
-# https://docs.python.org/3/library/functions.html#open
-# https://docs.python.org/3/howto/logging.html#logging-to-a-file
 import logging
 import faulthandler
 faulthandler.enable()
