@@ -31,6 +31,7 @@ import numpy as np
 # from toolbox.utilities.ned_logger import toolbox_logger as t_log
 from hopp.simulation.technologies.sites import SiteInfo
 from toolbox.utilities.ned_logger import site_logger as slog
+# from toolbox.utilities.ned_logger import deep_bug_logger as dbg_log
 def run_lcoh_lcoe(
     ned_out: NedOutputs,
     config:GreenHeartSimulationConfig,
@@ -78,7 +79,6 @@ def run_lcoh_lcoe(
         
         #t_log.info("\t\tLCOH: \t${}/kg".format(round(lcoh,3)))
     return ned_out
-
 
 def sweep_policy_cases(
     ned_out: NedOutputs,
@@ -227,7 +227,6 @@ def run_costs_for_different_h2_storage_type(
     #doesnt require different ancillary power usage, just changes h2 storage cost
     return ned_out
 
-
 def sweep_atb_cost_cases(
     ned_site: Site,
     ned_man: NedManager,
@@ -324,7 +323,6 @@ def sweep_atb_cost_cases(
                 )
             
     return ned_out
-
 
 def sweep_plant_design_types(
     ned_site:Site,
@@ -508,6 +506,7 @@ def update_config_for_baseline_cases(
     config.design_scenario = config.greenheart_config["plant_design"]["scenario{}".format(plant_design_id)]
 
     return config
+
 def update_config_for_site(
     ned_site:Site,
     config:GreenHeartSimulationConfig
@@ -517,6 +516,7 @@ def update_config_for_site(
     config.hopp_config["site"]["data"]["lon"] = ned_site.longitude
 
     return config
+
 def check_config_values(
     config:GreenHeartSimulationConfig,
     ned_man: NedManager):
@@ -589,7 +589,7 @@ def run_baseline_site(site_info,config_input_dict,ned_output_config_dict,ned_man
         hopp_site_main = hopp_site)
     slog.info("Site {}: completed second sweep of plant designs".format(site_info["id"]))
     ned_res.write_outputs(output_dir = ned_man.output_directory, save_wind_solar_generation = False)
-    slog.info("Site #{}: saved all outputs".format(site_info["id"]))
+    slog.info("Site {}: saved all outputs".format(site_info["id"]))
     end = time.perf_counter()
     sim_time = round((end-start)/60,3)
     slog.info("Site {}: {} min to run".format(site_info["id"],sim_time))
@@ -597,8 +597,6 @@ def run_baseline_site(site_info,config_input_dict,ned_output_config_dict,ned_man
     # print("{} min to run sim".format(round((end-start)/60,3)))
     return run_str
 
-def run_single_design(site_info):
-    pass
 def setup_runs(input_config):
     # input_filepath = INPUT_DIR/"v1-baseline-offgrid/equal-sized/main.yaml"
     # input_config = load_yaml(input_filepath)
@@ -617,8 +615,10 @@ def setup_runs(input_config):
 
     atb_year = input_config["atb_year"]
     resource_year = input_config["resource_year"]
-    re_plant_capacity_multiplier = input_config["re_plant_capacity_multiplier"]
-
+    if "re_plant_capacity_multiplier" in input_config:
+        re_plant_capacity_multiplier = input_config["re_plant_capacity_multiplier"]
+    else:
+        re_plant_capacity_multiplier = None
     filename_greenheart_config = os.path.join(str(LIB_DIR),input_config["filename_greenheart_config"])
     filename_hopp_config = os.path.join(str(LIB_DIR),input_config["filename_hopp_config"])
     filename_floris_config = os.path.join(str(LIB_DIR),input_config["filename_floris_config"])
@@ -739,11 +739,11 @@ def setup_runs(input_config):
 
 if __name__ == "__main__":
     start = time.perf_counter()
-    site_id = 40
+    site_id = 14740 #40
     atb_year = 2030
     version_num = 1
     sweep_name = "baseline-offgrid"
-    subsweep_name = "equal-sized"
+    subsweep_name = "equal-sized" #"over-sized" #"under-sized" #"equal-sized"
     input_filepath = INPUT_DIR/"v{}-{}/{}/main-{}.yaml".format(version_num,sweep_name,subsweep_name,atb_year)
     input_config = load_yaml(input_filepath)
 
@@ -765,5 +765,5 @@ if __name__ == "__main__":
     print("done")
     end = time.perf_counter()
     time_to_run = (end-start)/60
-    print("Took {} min to run".format(round(time_to_run,2)))
+    print("Took {} min to run {}".format(round(time_to_run,2),subsweep_name))
    

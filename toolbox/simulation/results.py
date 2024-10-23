@@ -198,8 +198,9 @@ class PhysicsResults(FromDictMixin):
         self.h2_design_results = {}
         self.ancillary_power_info = {}
         self.electrolyzer_LTA = pd.DataFrame()
-
-        self.renewables_summary, self.renewable_plant_design_type = summarize_renewables_info(self.hopp_results["hybrid_plant"])
+        
+        if "hybrid_plant" in self.hopp_results:
+            self.renewables_summary, self.renewable_plant_design_type = summarize_renewables_info(self.hopp_results["hybrid_plant"])
         float_keys = [k for k in self.electrolyzer_physics_results["H2_Results"].keys() if isinstance(self.electrolyzer_physics_results["H2_Results"][k],(int,float))]
         self.h2_results = {k:self.electrolyzer_physics_results["H2_Results"][k] for k in float_keys}
         self.electrolyzer_LTA = self.electrolyzer_physics_results["H2_Results"]["Performance Schedules"]
@@ -212,8 +213,9 @@ class PhysicsResults(FromDictMixin):
         self.timeseries.update({"Power to Electrolyzer [kW]":self.electrolyzer_physics_results["power_to_electrolyzer_kw"]})
         
         original_gen = np.zeros(len(h2_hourly))
-        if sum(self.hopp_results['combined_hybrid_curtailment_hopp'])<100:
-            self.timeseries.update({"HOPP Curtailment [kW]":self.hopp_results['combined_hybrid_curtailment_hopp'][:len(h2_hourly)]})
+        if 'combined_hybrid_curtailment_hopp' in self.hopp_results:
+            if sum(self.hopp_results['combined_hybrid_curtailment_hopp'])<100:
+                self.timeseries.update({"HOPP Curtailment [kW]":self.hopp_results['combined_hybrid_curtailment_hopp'][:len(h2_hourly)]})
         
         if "wind" in self.renewable_plant_design_type:
             
@@ -359,7 +361,7 @@ class ConfigTracker(FromDictMixin):
 @define
 class NedOutputs(BaseClassNed):
     site: Site
-    sweep_name: str = field(validator=contains(['offgrid-baseline','gridonly-baseline','offgrid-optimized']))
+    sweep_name: str = field(validator=contains(['offgrid-baseline','grid-only-baseline','offgrid-optimized']))
     # renewable_plant_design_type: str = field(validator=contains(['wind','wind-pv','wind-battery','wind-pv-battery','pv','pv-battery']))
     atb_year: int = field(validator=range_val(2020.,2050.))
 
