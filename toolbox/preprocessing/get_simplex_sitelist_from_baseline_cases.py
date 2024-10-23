@@ -17,50 +17,69 @@ def remove_duplicate_design_entries(d_data):
 
 
 set_local_results_dir_dot_env()
-results_dir = get_local_results_dir()
-sweep_name = "offgrid-baseline"
-subsweep_names = ["equal-sized","under-sized","over-sized"]
-atb_year = 2030
-version = 1
+
+# atb_year = 2030
 
 
-simplex_h2_storage_type = "pipe" #pipe or none if on-site, salt_cavern or lined_rock_cavern if geologic
-simplex_h2_storage_desc = "on-site" #"on-site" or "geologic"
-simplex_h2_transport_desc = "colocated" #"colocated" or "pipeline"
-simplex_h2_system_design = "pipe storage-colocated"
-simplex_h2_system_design_design = "pipe storage-colocated"
-simplex_atb_scenario = "Moderate"
-simplex_policy_scenario = "1"
-simplex_design_variables = ["PV: System Capacity [kW-DC]","Wind: System Capacity [kW]","Battery: System Capacity [kW]","Battery: System Capacity [kWh]"]
-results_path = os.path.join(results_dir, "v{}".format(version))
-lcoh_column_name = "LCOH [$/kg]: {}-{}-Policy#{}".format(atb_year,simplex_atb_scenario,simplex_policy_scenario)
+def make_sitelist_simplex_baseline_offgrid(
+    h2_storage_type = "pipe",
+    h2_storage_desc = "on-site",
+    h2_transport_desc = "colocated",
+    atb_scenario = "Moderate",
+    atb_year = 2030,
+    policy_scenario = "1",
+    version = 1,
+    sweep_name = "offgrid-baseline",
+    subsweep_names = ["equal-sized","under-sized","over-sized"],
+    ):
+    simplex_design_variables = ["PV: System Capacity [kW-DC]","Wind: System Capacity [kW]","Battery: System Capacity [kW]","Battery: System Capacity [kWh]"]
+    lcoh_column_name = "LCOH [$/kg]: {}-{}-Policy#{}".format(atb_year,atb_scenario,policy_scenario)
 
-simplex_df = pd.DataFrame()
-for i in range(len(subsweep_names)):
-    lcoh_data_filepath = os.path.join(results_path,"Results--LCOH_{}_{}_ATB_{}.pkl".format(sweep_name,subsweep_names[i],atb_year))
-    physics_data_filepath = os.path.join(results_path,"Results--Physics_{}_{}_ATB_{}.pkl".format(sweep_name,subsweep_names[i],atb_year))
-    lcoh_data = pd.read_pickle(lcoh_data_filepath)
-    design_data = pd.read_pickle(physics_data_filepath)
-    design_data = design_data.sort_index(axis = 0,level="id")
-    lcoh_data = lcoh_data.sort_index(axis = 0,level="id")
+    # version = 1
+    results_dir = get_local_results_dir()
+    # sweep_name = "offgrid-baseline"
+    # subsweep_names = ["equal-sized","under-sized","over-sized"]
+    # h2_storage_type = "pipe" #pipe or none if on-site, salt_cavern or lined_rock_cavern if geologic
+    # h2_storage_desc = "on-site" #"on-site" or "geologic"
+    # h2_transport_desc = "colocated" #"colocated" or "pipeline"
+    # atb_scenario = "Moderate"
+    # policy_scenario = "1"
     
-    lcoh_data = lcoh_data.reorder_levels(["H2 System Design","RE Plant Design","id","latitude","longitude","state"]) #lcoh_data.swaplevel("id","H2 System Design").swaplevel("latitude","RE Plant Design").swaplevel("longitude","id")
-    lcoh_data = lcoh_data.loc["{} storage-{}".format(simplex_h2_storage_type,simplex_h2_transport_desc)][lcoh_column_name]
-    design_data = design_data.reorder_levels(["H2 System Design","RE Plant Design","id","latitude","longitude","state"]) #.swaplevel("id","H2 System Design").swaplevel("latitude","RE Plant Design").swaplevel("longitude","id")
-    design_data = design_data.loc["{} storage-{}".format(simplex_h2_storage_desc,simplex_h2_transport_desc)][simplex_design_variables].fillna(value=0)
-    if len(design_data) != len(lcoh_data):
-        design_data = remove_duplicate_design_entries(design_data)
-
-    temp_simplex_df = pd.concat([design_data,lcoh_data],axis=1)
     
-    temp_simplex_df["Case"] = [subsweep_names[i]]*len(temp_simplex_df)
-    temp_simplex_df = temp_simplex_df.set_index("Case",append=True)
-    simplex_df = pd.concat([simplex_df,temp_simplex_df],axis=0)
-    []
-simplex_df = simplex_df.reorder_levels(["id","latitude","longitude","state","Case","RE Plant Design"])
-simplex_filename = "OffGridBaseline_SimplexSiteList_{}-{}-{}_{}-{}-{}".format(simplex_atb_scenario,atb_year,simplex_policy_scenario,simplex_h2_storage_desc,simplex_h2_storage_type,simplex_h2_transport_desc)
-simplex_filepath = os.path.join(str(SITELIST_DIR),simplex_filename)
-simplex_df.to_csv(simplex_filepath + ".csv")
-simplex_df.to_pickle(simplex_filepath + ".pkl")
-print("Saved Simplex data as {}".format(simplex_filename))
-[]
+
+    results_path = os.path.join(results_dir, "v{}".format(version))
+    
+
+    simplex_df = pd.DataFrame()
+    for i in range(len(subsweep_names)):
+        lcoh_data_filepath = os.path.join(results_path,"Results--LCOH_{}_{}_ATB_{}.pkl".format(sweep_name,subsweep_names[i],atb_year))
+        physics_data_filepath = os.path.join(results_path,"Results--Physics_{}_{}_ATB_{}.pkl".format(sweep_name,subsweep_names[i],atb_year))
+        lcoh_data = pd.read_pickle(lcoh_data_filepath)
+        design_data = pd.read_pickle(physics_data_filepath)
+        design_data = design_data.sort_index(axis = 0,level="id")
+        lcoh_data = lcoh_data.sort_index(axis = 0,level="id")
+        
+        lcoh_data = lcoh_data.reorder_levels(["H2 System Design","RE Plant Design","id","latitude","longitude","state"]) #lcoh_data.swaplevel("id","H2 System Design").swaplevel("latitude","RE Plant Design").swaplevel("longitude","id")
+        lcoh_data = lcoh_data.loc["{} storage-{}".format(h2_storage_type,h2_transport_desc)][lcoh_column_name]
+        design_data = design_data.reorder_levels(["H2 System Design","RE Plant Design","id","latitude","longitude","state"]) #.swaplevel("id","H2 System Design").swaplevel("latitude","RE Plant Design").swaplevel("longitude","id")
+        design_data = design_data.loc["{} storage-{}".format(h2_storage_desc,h2_transport_desc)][simplex_design_variables].fillna(value=0)
+        if len(design_data) != len(lcoh_data):
+            design_data = remove_duplicate_design_entries(design_data)
+
+        temp_simplex_df = pd.concat([design_data,lcoh_data],axis=1)
+        
+        temp_simplex_df["Case"] = [subsweep_names[i]]*len(temp_simplex_df)
+        temp_simplex_df = temp_simplex_df.set_index("Case",append=True)
+        simplex_df = pd.concat([simplex_df,temp_simplex_df],axis=0)
+        []
+    simplex_df = simplex_df.reorder_levels(["id","latitude","longitude","state","Case","RE Plant Design"])
+    simplex_filename = "OffGridBaseline_SimplexSiteList_{}-{}-{}_{}-{}-{}".format(atb_scenario,atb_year,policy_scenario,h2_storage_desc,h2_storage_type,h2_transport_desc)
+    simplex_filepath = os.path.join(str(SITELIST_DIR),simplex_filename)
+    simplex_df.to_csv(simplex_filepath + ".csv")
+    simplex_df.to_pickle(simplex_filepath + ".pkl")
+    print("Saved Simplex data as {}".format(simplex_filename))
+    return simplex_df
+
+if __name__ == "__main__":
+    make_sitelist_simplex_baseline_offgrid(h2_storage_type="none")
+    print("done")
