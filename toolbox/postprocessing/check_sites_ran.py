@@ -1,7 +1,9 @@
 import pandas as pd
 import numpy as np
 import os
-from toolbox import ROOT_DIR,INPUT_DIR
+import faulthandler
+faulthandler.enable()
+from toolbox import ROOT_DIR,INPUT_DIR,SITELIST_DIR
 from toolbox.utilities.file_tools import check_create_folder
 import datetime
 def check_folder_for_ran_sites(result_dir,output_dir,sim_desc):
@@ -22,15 +24,38 @@ def check_folder_for_ran_sites(result_dir,output_dir,sim_desc):
     print(output_filename)
     
 
+def make_list_of_remaining_sites(result_dir,output_dir,sim_desc):
+    n_files_successful = 10
+    sitelist_filepath = os.path.join(str(SITELIST_DIR),"ned_final_sitelist_50082locs.csv")
+    site_list = pd.read_csv(sitelist_filepath,index_col = "Unnamed: 0")
+    sites_ran = check_folder_for_ran_sites(result_dir,output_dir,sim_desc)
+    sites_ran.index = sites_ran["site ids"].to_list()
+    site_list.index = site_list["id"].to_list()
+
+    site_id_todo = []
+    sites_partial = sites_ran[sites_ran["# files"] != n_files_successful]
+    site_id_todo += sites_partial["site ids"].to_list()
+    
+    site_id_todo += [i for i in site_list.index.to_list() if i not in sites_ran.index.to_list()]
+    site_id_todo = list(np.unique(site_id_todo))
+    sites_remaining = site_list.loc[site_id_todo]
+
+    sitelist_filename_todo = os.path.join(str(SITELIST_DIR),"ned_sitelist_{}locs.csv".format(len(sites_remaining)))
+    print("New sitelist filepath: \n {}".format(sitelist_filename_todo))
+    sites_remaining.to_csv(sitelist_filename_todo)
+    print("saved csv")
 
 if __name__ == "__main__":
     results_parent = "/projects/hopp/ned-results"
     version = "1"
     sweep_name = "offgrid-baseline"
-    subsweep_name = "equal-sized"
+    subsweep_name = "over-sized" #"equal-sized"
     atb_year = 2030
     sim_desc = "v{}_{}_{}_{}".format(version,sweep_name,subsweep_name,atb_year)
-    result_dir = os.path.join(results_parent,sweep_name,subsweep_name,"ATB_{}".format(atb_year))
+    result_dir = os.path.join(results_parent,"v{}".format(version),sweep_name,subsweep_name,"ATB_{}".format(atb_year))
     output_dir = os.path.join(str(ROOT_DIR),"sites_ran_info")
     check_create_folder(output_dir)
-    check_folder_for_ran_sites(result_dir,output_dir,sim_desc)
+
+    make_list_of_remaining_sites(result_dir,output_dir,sim_desc)
+    # os.path.getsize("/projects/hopp/")
+    # check_folder_for_ran_sites(result_dir,output_dir,sim_desc)
