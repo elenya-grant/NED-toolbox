@@ -68,7 +68,8 @@ def aggregate_files(filelist,results_dir,output_filename_base):
         summary_df = pd.concat([summary_df,reformatted_physics_df],axis=0)
     
     summary_df.to_pickle(output_filename_base + ".pkl")
-    summary_df.to_csv(output_filename_base + ".pkl")
+    summary_df.to_csv(output_filename_base + ".csv")
+    print("saved {}".format(output_filename_base))
 start_time = datetime.now()
 
 comm = MPI.COMM_WORLD
@@ -108,7 +109,7 @@ def main(full_filelist,result_dir,output_filepath_base_base):
         s_list_chunks = None
     ### scatter
     s_list_chunks = comm.scatter(s_list_chunks, root=0)
-
+    print(f"\n rank {rank} has its files to process")
     # for i,gid in enumerate(s_list_chunks):
     aggregate_files(s_list_chunks,result_dir,output_filepath_base_base + f"_{rank}")
     print(f"rank {rank}: ellapsed time: {datetime.now() - start_time}")

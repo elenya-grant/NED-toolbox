@@ -37,7 +37,8 @@ def aggregate_files(filelist,results_dir,output_filename_base):
         reformatted_lcoe_df.index = reformatted_lcoe_df.index.set_names(index_keys)
         summary_df = pd.concat([summary_df,reformatted_lcoe_df],axis=0)
     summary_df.to_pickle(output_filename_base + ".pkl")
-    summary_df.to_csv(output_filename_base + ".pkl")
+    summary_df.to_csv(output_filename_base + ".csv")
+    print("saved {}".format(output_filename_base))
 
 start_time = datetime.now()
 
@@ -80,9 +81,9 @@ def main(full_filelist,result_dir,output_filepath_base_base):
     s_list_chunks = comm.scatter(s_list_chunks, root=0)
 
     # for i,gid in enumerate(s_list_chunks):
+    print(f"\n rank {rank} has its files to process")
     aggregate_files(s_list_chunks,result_dir,output_filepath_base_base + f"_{rank}")
     print(f"rank {rank}: ellapsed time: {datetime.now() - start_time}")
-
 
 if __name__ == "__main__":
     # from toolbox import ROOT_DIR, LIB_DIR
