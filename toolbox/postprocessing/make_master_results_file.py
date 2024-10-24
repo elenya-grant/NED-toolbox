@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+from datetime import datetime
 def combine_files(summary_dir,summary_type,run_desc):
     agg_files = os.listdir(summary_dir)
     agg_files = [f for f in agg_files if summary_type in f]
@@ -7,6 +8,8 @@ def combine_files(summary_dir,summary_type,run_desc):
     agg_files = [f for f in agg_files if ".pkl" in f]
 
     final_df = pd.DataFrame()
+    print("start time: {}".format(datetime.now()))
+    print("{} files to combine".format(len(agg_files)))
     for file in agg_files:
         filepath = os.path.join(summary_dir,file)
         df = pd.read_pickle(filepath)
@@ -27,7 +30,11 @@ if __name__ == "__main__":
     atb_year = 2030
     summary_dir = "/projects/hopp/ned-results/v{}/aggregated_results".format(version)
 
-    summary_type = "LCOH" #"LCOH" "LCOE" "Physics"
-    run_desc = "{}_{}_ATB_{}".format(sweep_name,subsweep_name,atb_year)
+    # summary_type = "LCOH" #"LCOH" "LCOE" "Physics"
+    # run_desc = "{}_{}_ATB_{}".format(sweep_name,subsweep_name,atb_year)
     
     # file_desc = "Physics_{}_{}_ATB_{}".format(sweep_name,subsweep_name,atb_year)
+    summary_types = ["Physics","LCOE","LCOH"]
+    for summary_type in summary_types:
+        run_desc = "{}_{}_ATB_{}".format(sweep_name,subsweep_name,atb_year)
+        combine_files(summary_dir,summary_type,run_desc)
