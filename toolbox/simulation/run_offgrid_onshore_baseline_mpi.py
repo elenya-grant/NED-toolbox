@@ -36,14 +36,15 @@ from toolbox.utilities.ned_logger import main_logger as main_log
 # https://docs.python.org/3/library/functions.html#open
 # https://docs.python.org/3/howto/logging.html#logging-to-a-file
 import logging
-
+import faulthandler
+faulthandler.enable()
 
 
 def do_something(site_list,inputs,site_id):
-    mpi_log.info("Site {}: starting".format(site_id))
+    mpi_log.debug("Site {}: starting".format(site_id))
     config_input_dict,ned_output_config_dict,ned_man = inputs
     run_baseline_site(site_list.loc[site_id].to_dict(),config_input_dict,ned_output_config_dict,ned_man)
-    mpi_log.info("Site {}: complete".format(site_id))
+    mpi_log.debug("Site {}: complete".format(site_id))
 
 start_time = datetime.now()
 
@@ -63,8 +64,8 @@ def main(sitelist,inputs,verbose = False):
 
     ### input
     main_log.info(f"START TIME: {start_time}")
-    main_log.info("number of ranks: {}".format(size))
-    main_log.info("number of sites: {}".format(len(sitelist)))
+    # main_log.info("number of ranks: {}".format(size))
+    # main_log.info("number of sites: {}".format(len(sitelist)))
     ### site gids to process (e.g., could come form wtk file's meta)
     # site_idxs = pd.Index(range(n_sites))
     
@@ -128,7 +129,7 @@ if __name__ == "__main__":
 
     
 
-    subsweep = "equal-sized" #["equal-sized","over-sized","under-sized"]
+    subsweep = "over-sized" #"under-sized" #"equal-sized" #["equal-sized","over-sized","under-sized"]
     atb_year = 2030
     input_filepath = INPUT_DIR/"v1-baseline-offgrid/{}/main-{}.yaml".format(subsweep,atb_year)
     input_config = load_yaml(input_filepath)
@@ -139,19 +140,18 @@ if __name__ == "__main__":
     # input_config["output_dir"] = "/kfs2/projects/hopp/ned-results/v1"
 
     # below is to run locally
-    input_config["renewable_resource_origin"] = "API" #"API" or "HPC"
-    input_config["hpc_or_local"] = "local"
-    if "env_path" in input_config:
-        input_config.pop("env_path")
-    input_config.pop("output_dir")
+    # input_config["renewable_resource_origin"] = "API" #"API" or "HPC"
+    # input_config["hpc_or_local"] = "local"
+    # if "env_path" in input_config:
+    #     input_config.pop("env_path")
+    # input_config.pop("output_dir")
     
     site_list, inputs = setup_runs(input_config)
-    main_log.info("set up runs")
+    # main_log.info("set up runs")
     end_idx = start_idx + n_sites
     if end_idx>=len(site_list):
         sitelist = site_list.iloc[start_idx:]
     else:
         sitelist = site_list.iloc[start_idx:start_idx+n_sites]
     
-    main(sitelist,inputs)
-
+    main(sitelist,inputs,verbose=False)

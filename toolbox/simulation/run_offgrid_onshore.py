@@ -32,6 +32,9 @@ import numpy as np
 from hopp.simulation.technologies.sites import SiteInfo
 from toolbox.utilities.ned_logger import site_logger as slog
 # from toolbox.utilities.ned_logger import deep_bug_logger as dbg_log
+import faulthandler
+faulthandler.enable()
+
 def run_lcoh_lcoe(
     ned_out: NedOutputs,
     config:GreenHeartSimulationConfig,
@@ -336,7 +339,10 @@ def sweep_plant_design_types(
     
     #t_log.info("({},{}) --- {},{}".format(ned_site.latitude,ned_site.longitude,ned_site.state,ned_site.county))
     if hopp_site_main is None:
+        slog.warning("Site {}: hopp_site_main is None".format(ned_site.id))
         hopp_site_main = SiteInfo(**config.hopp_config["site"]) #TODO: update this
+        slog.debug("Site {}: created hopp_site_main in sweep_plant_design_types".format(ned_site.id))
+
     
     if ned_man.baseline_h2_storage_type == "none":
         next_h2_storage_type = "pipe"
@@ -384,10 +390,20 @@ def sweep_plant_design_types(
         # if verbose:
         #     print("wind capacity: {} MW".format(wind_capacity_mw))
         #     print("solar capacity: {} MWac".format(pv_capacity_mwac))
+        if not isinstance(hopp_config,dict):
+            slog.warning("Site {}: plant: {} - hopp_config is type: {}".format(ned_site.id,plant_desc,type(hopp_config)))
         hopp_config = int_tool.update_hopp_config_for_wind_capacity(wind_capacity_mw,ned_man,hopp_config)
+        if not isinstance(hopp_config,dict):
+            slog.warning("Site {}: plant: {} - hopp_config_wind is type: {}".format(ned_site.id,plant_desc,type(hopp_config)))
         hopp_config = int_tool.update_hopp_config_for_solar_capacity(pv_capacity_mwac,ned_man,hopp_config)
+        if not isinstance(hopp_config,dict):
+            slog.warning("Site {}: plant: {} - hopp_config_solar is type: {}".format(ned_site.id,plant_desc,type(hopp_config)))
         hopp_config = int_tool.update_hopp_config_for_battery(include_battery,ned_man,hopp_config)
+        if not isinstance(hopp_config,dict):
+            slog.warning("Site {}: plant: {} - hopp_battery is type: {}".format(ned_site.id,plant_desc,type(hopp_config)))
         hopp_config = int_tool.update_hopp_site_for_case(pv_capacity_mwac,wind_capacity_mw,hopp_site_main.wind_resource,hopp_site_main.solar_resource,hopp_config)
+        if not isinstance(hopp_config,dict):
+            slog.warning("Site {}: plant: {} - hopp_config_site is type: {}".format(ned_site.id,plant_desc,type(hopp_config)))
         config.hopp_config = hopp_config
         if ned_man.run_battery_for_ancillary_power:
             ancillary_power_usage_kw = gh_mgmt.estimate_power_for_peripherals_kw_land_based(config.greenheart_config,renewable_plant_capacity_MWac*1e3,config.design_scenario)
@@ -533,7 +549,7 @@ def check_config_values(
 
 def run_baseline_site(site_info,config_input_dict,ned_output_config_dict,ned_man_dict):
     start = time.perf_counter()
-    slog.info("Site {}: starting baseline site run".format(site_info["id"]))
+    slog.debug("Site {}: starting baseline site run".format(site_info["id"]))
     ned_site = Site.from_dict(site_info)
     ned_output_config_dict.update({"site":ned_site})
     ned_output_config_dict.update({"extra_desc":"onsite_storage"})
@@ -556,9 +572,9 @@ def run_baseline_site(site_info,config_input_dict,ned_output_config_dict,ned_man
         config=config,
         ned_man = ned_man,
         )
-    slog.info("Site {}: ready to start".format(site_info["id"]))
+    slog.debug("Site {}: ready to start".format(site_info["id"]))
     hopp_site = SiteInfo(**config.hopp_config["site"])
-    slog.info("Site {}: made hopp site".format(site_info["id"]))
+    slog.debug("Site {}: made hopp site".format(site_info["id"]))
     # sweep everything with none and pipe h2 storage
     ned_res = sweep_plant_design_types(
         ned_site=ned_site,
@@ -567,9 +583,9 @@ def run_baseline_site(site_info,config_input_dict,ned_output_config_dict,ned_man
         ned_out=ned_out,
         hopp_site_main = hopp_site)
     # ned_res.write_outputs(output_dir = ned_man.output_directory,save_separately=False)
-    slog.info("Site {}: swept first set of plant designs".format(site_info["id"]))
+    slog.debug("Site {}: swept first set of plant designs".format(site_info["id"]))
     ned_res.write_outputs(output_dir = ned_man.output_directory,save_wind_solar_generation = True)
-    slog.info("Site {}: saved half of outputs".format(site_info["id"]))
+    slog.debug("Site {}: saved half of outputs".format(site_info["id"]))
     ned_man.baseline_h2_storage_type = "lined_rock_cavern"
     
     #reset outputs for geologic storage
@@ -580,19 +596,19 @@ def run_baseline_site(site_info,config_input_dict,ned_output_config_dict,ned_man
         config=config,
         ned_man = ned_man,
         )
-    slog.info("Site {}: starting second sweep of plant designs".format(site_info["id"]))
+    slog.debug("Site {}: starting second sweep of plant designs".format(site_info["id"]))
     ned_res = sweep_plant_design_types(
         ned_site=ned_site,
         config = copy.deepcopy(config),
         ned_man=ned_man,
         ned_out=ned_out,
         hopp_site_main = hopp_site)
-    slog.info("Site {}: completed second sweep of plant designs".format(site_info["id"]))
+    slog.debug("Site {}: completed second sweep of plant designs".format(site_info["id"]))
     ned_res.write_outputs(output_dir = ned_man.output_directory, save_wind_solar_generation = False)
-    slog.info("Site {}: saved all outputs".format(site_info["id"]))
+    slog.debug("Site {}: saved all outputs".format(site_info["id"]))
     end = time.perf_counter()
     sim_time = round((end-start)/60,3)
-    slog.info("Site {}: {} min to run".format(site_info["id"],sim_time))
+    slog.debug("Site {}: {} min to run".format(site_info["id"],sim_time))
     run_str = "start_time: {} \n simulation time: {} min".format(start,sim_time)
     # print("{} min to run sim".format(round((end-start)/60,3)))
     return run_str
@@ -730,7 +746,11 @@ def setup_runs(input_config):
         run_battery_for_ancillary_power=input_config["run_battery_for_ancillary_power"],
         ancillary_power_solver_method=input_config["ancillary_power_solver_method"])
 
-    config = GreenHeartSimulationConfig(**config_input_dict)
+    try:
+        config = GreenHeartSimulationConfig(**config_input_dict)
+    except TypeError:
+        slog.warning("HOPP CONFIG NOT LOADED CORRECTLY ... retrying")
+        config = GreenHeartSimulationConfig(**config_input_dict)
     ned_manager.set_renewable_specs(config)
     ned_manager.set_default_hopp_technologies(config.hopp_config["technologies"])
     ned_manager.export_to_yaml() #save ned man
