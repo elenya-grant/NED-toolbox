@@ -21,7 +21,7 @@ design_variables:
     units: "MW"
     simplex_keyname: "Wind: System Capacity [kW]"
     simplex_key_multiplier: 0.001
-    extra_simplex_sizes: [900.0, 1260.0, 1440.0] #[1.25,1.75,2] [1000.0,1500.0]
+    extra_simplex_sizes: [60.0, 900.0, 1260.0, 1440.0] #[1.25,1.75,2] [1000.0,1500.0]
     initial_simplex_sizes: [180.0, 360.0, 540.0, 720.0, 1080.0]
   pv_size_mwdc:
     re_plant: "pv"
@@ -32,7 +32,7 @@ design_variables:
     units: "MWdc"
     simplex_keyname: "PV: System Capacity [kW-DC]"
     simplex_key_multiplier: 0.001
-    extra_simplex_sizes: [1206.0, 1688.4, 1929.6] #[1000.0,1500.0]
+    extra_simplex_sizes: [80.4, 1206.0, 1688.4, 1929.6] #[1000.0,1500.0]
     initial_simplex_sizes: [241.2, 482.4, 723.6, 964.8, 1447.2]
 
 merit_figures: 
@@ -82,7 +82,7 @@ driver:
 existing_timeseries_info:
   flag: True
   storage_desc: "onsite_storage" #only used for baseline cases
-  prev_run_main_output_dir: "/Users/egrant/Documents/projects/NED-toolbox/results" #"/projects/hopp/ned-results/v1"
+  prev_run_main_output_dir: "/projects/hopp/ned-results/v1" #"/Users/egrant/Documents/projects/NED-toolbox/results"
   prev_run_sweep_name: "offgrid-optimized" #"offgrid-baseline"
   prev_run_subsweep_names: ["pipe"] #["over-sized","equal-sized","under-sized"]
   prev_run_atb_year: 2025 #2030

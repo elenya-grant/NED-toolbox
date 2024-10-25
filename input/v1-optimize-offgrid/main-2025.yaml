@@ -18,7 +18,7 @@ re_plant_types: #unused for optimization
   wind-pv-battery: 0.5 #unused for optimization
   pv: 1.0 #unused for optimization
   pv-battery: 1.0 #unused for optimization
-subsweep_name: "moderate-pipe" #"optimized" #TODO: update this
+subsweep_name: "hybrid_renewables" 
 output_dir: "/projects/hopp/ned-results/v1"
 hpc_resource_info:
   wtk_source_path: "/kfs2/datasets/WIND/conus/v1.0.0"
