@@ -6,6 +6,7 @@ def combine_files(summary_dir,summary_type,run_desc):
     agg_files = [f for f in agg_files if summary_type in f]
     agg_files = [f for f in agg_files if run_desc in f]
     agg_files = [f for f in agg_files if ".pkl" in f]
+    agg_files = [f for f in agg_files if "Results--{}_{}".format(summary_type,run_desc) not in f]
 
     final_df = pd.DataFrame()
     print("start time: {}".format(datetime.now()))
