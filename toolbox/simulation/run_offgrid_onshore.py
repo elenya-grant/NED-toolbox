@@ -5,6 +5,8 @@ import pandas as pd
 import yaml
 import os
 import time
+from typing import Union
+from toolbox.simulation.plant.design.site_simplex import SiteSimplex
 from yamlinclude import YamlIncludeConstructor
 from pathlib import Path
 from greenheart.simulation.greenheart_simulation import GreenHeartSimulationConfig
@@ -126,7 +128,7 @@ def sweep_policy_cases(
     return ned_out
 
 def run_costs_for_different_h2_storage_type(
-    ned_site:Site,
+    ned_site:Union[Site,SiteSimplex],
     config:GreenHeartSimulationConfig,
     ned_man: NedManager,
     ned_out: NedOutputs,
@@ -183,8 +185,9 @@ def run_costs_for_different_h2_storage_type(
             verbose=False,
         )
     h2_prod_store_results[1] = h2_storage_results
-    if ned_out.Physics_Res[-1].h2_storage_type != new_h2_storage_type:
-        ned_out.Physics_Res[-1].add_h2_design(new_h2_storage_type,transport_desc,h2_storage_results,h2_transport_results[2],h2_transport_results[1])
+    if len(ned_out.Physics_Res)>0:
+        if ned_out.Physics_Res[-1].h2_storage_type != new_h2_storage_type:
+            ned_out.Physics_Res[-1].add_h2_design(new_h2_storage_type,transport_desc,h2_storage_results,h2_transport_results[2],h2_transport_results[1])
 
     capex_breakdown, opex_breakdown_annual, fin_res = gh_mgmt.calc_capex_and_opex(
             hopp_results, 
@@ -231,7 +234,7 @@ def run_costs_for_different_h2_storage_type(
     return ned_out
 
 def sweep_atb_cost_cases(
-    ned_site: Site,
+    ned_site: Union[Site,SiteSimplex],
     ned_man: NedManager,
     ned_out: NedOutputs,
     re_plant_desc,
@@ -328,7 +331,7 @@ def sweep_atb_cost_cases(
     return ned_out
 
 def sweep_plant_design_types(
-    ned_site:Site,
+    ned_site:Union[Site,SiteSimplex],
     config:GreenHeartSimulationConfig,
     ned_man: NedManager,
     ned_out: NedOutputs,
@@ -498,7 +501,7 @@ def sweep_plant_design_types(
     return ned_out
        
 def update_config_for_baseline_cases(
-    ned_site:Site,
+    ned_site:Union[Site,SiteSimplex],
     config:GreenHeartSimulationConfig,
     ned_man:NedManager):
     #update baseline costs
@@ -524,7 +527,7 @@ def update_config_for_baseline_cases(
     return config
 
 def update_config_for_site(
-    ned_site:Site,
+    ned_site:Union[Site,SiteSimplex],
     config:GreenHeartSimulationConfig
     ):
     config.greenheart_config["site"]["feedstock_region"] = ned_site.feedstock_region
