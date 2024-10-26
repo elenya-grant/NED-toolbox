@@ -2,58 +2,58 @@ wind_cost_year: 2022
 solar_cost_year: 2022
 battery_cost_year: 2022
 electrolyzer_cost_year: 2022
-ATB_year: 2025
+ATB_year: 2024
 cost_cases:
   Conservative:
     wind: 
-      overnight_capex: 1440 #[$/kW]
+      overnight_capex: 1523 #[$/kW]
       fixed_om: 32 #[$/kW-year]
     solar:
-      overnight_capex: 1362 #[$/kW-ac]
+      overnight_capex: 1398 #[$/kW-ac]
       fixed_om: 22 #[$/kWac-year]
     battery:
-      energy_capex: 402 #[$/kWh]
-      power_capex: 375 #[$/kW]
+      energy_capex: 408 #[$/kWh]
+      power_capex: 379 #[$/kW]
       # fixed_om: 50 #[$/kW-year]
       fixed_om_percent: 2.5 #[% capex/year]
     electrolyzer:
-      overnight_capex: 1520 #2500 #1743.56 [$/kW] [2022 USD/kW]
+      overnight_capex: 2500 #1743.56 [$/kW] [2022 USD/kW]
       fixed_om: 12.8 #[$/kW]
       var_om: 0.0013 #[$/kWh]
       refurb_cost: 0.15 #[%]
 
   Moderate:
     wind: 
-      overnight_capex: 1380 #[$/kW]
-      fixed_om: 31 #[$/kW-year]
+      overnight_capex: 1481 #[$/kW]
+      fixed_om: 32 #[$/kW-year]
     solar:
-      overnight_capex: 1323 #[$/kW-ac]
-      fixed_om: 21 #[$/kWac-year]
+      overnight_capex: 1379 #[$/kW-ac]
+      fixed_om: 22 #[$/kWac-year]
     battery:
-      energy_capex: 310 #[$/kWh]
-      power_capex: 311 #[$/kW]
+      energy_capex: 356 #[$/kWh]
+      power_capex: 347 #[$/kW]
       # fixed_om: 39 #[$/kW-year]
       fixed_om_percent: 2.5 #[% capex/year]
     electrolyzer:
-      overnight_capex: 1232 #2000 #1232.0 [2022 USD/kW]
+      overnight_capex: 2000 #1232.0 [2022 USD/kW]
       fixed_om: 12.8
       var_om: 0.0013
       refurb_cost: 0.15 #[%]
 
   Advanced:
     wind: 
-      overnight_capex: 1357 #[$/kW]
-      fixed_om: 30 #[$/kW-year]
+      overnight_capex: 1465 #[$/kW]
+      fixed_om: 31 #[$/kW-year]
     solar:
-      overnight_capex: 1297 #[$/kW-ac]
+      overnight_capex: 1366 #[$/kW-ac]
       fixed_om: 21 #[$/kWac-year]
     battery:
-      energy_capex: 252 #[$/kWh]
-      power_capex: 233 #[$/kW]
+      energy_capex: 319 #[$/kWh]
+      power_capex: 297 #[$/kW]
       # fixed_om: 31 #[$/kW-year]
       fixed_om_percent: 2.5 #[% capex/year]
     electrolyzer:
-      overnight_capex: 952 #1750 #953.4 2022 USD
+      overnight_capex: 1750 #953.4 2022 USD
       fixed_om: 12.8
       var_om: 0.0013
       refurb_cost: 0.15 #[%]
