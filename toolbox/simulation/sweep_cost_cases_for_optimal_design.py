@@ -146,8 +146,10 @@ def sweep_custom_plant_designs(
             sweep_incentives = True,
             new_h2_storage_type = next_h2_storage_type_geo
             )
-    ned_out_geo.write_outputs(output_dir = ned_man_geo.output_directory,save_wind_solar_generation = False)
-    ned_out_onsite.write_outputs(output_dir = ned_man_onsite.output_directory,save_wind_solar_generation = True)
+        ned_out_geo.update({"extra_desc":"geologic_storage-{}".format(custom_plant_designs[i].optimization_design_desc)})
+        ned_out_onsite.update({"extra_desc":"onsite_storage-{}".format(custom_plant_designs[i].optimization_design_desc)})
+        ned_out_geo.write_outputs(output_dir = ned_man_geo.output_directory,save_wind_solar_generation = False)
+        ned_out_onsite.write_outputs(output_dir = ned_man_onsite.output_directory,save_wind_solar_generation = True)
         # ghg_res = gh_mgmt.solve_for_ancillary_power_and_run(
         #         hopp_results = hopp_results,
         #         wind_cost_results = wind_cost_results,

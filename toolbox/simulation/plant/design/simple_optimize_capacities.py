@@ -10,7 +10,7 @@ from toolbox.simulation.plant.design.base_optimization import SimulationResults,
 import toolbox.simulation.plant.design.optimization_tools as opt_tools
 
 
-def objective_func(x,ned_man,ned_out,config,hopp_site,include_battery,col_order,re_plant_desc,OptRes,extra_desc):
+def objective_func(x,ned_man,ned_out,config,hopp_site,include_battery,col_order,re_plant_desc,OptRes,merit_figure):
     if len(x) == 2:
         wind_capacity_mw,pv_capacity_mwdc = x
     else:
@@ -27,19 +27,23 @@ def objective_func(x,ned_man,ned_out,config,hopp_site,include_battery,col_order,
     #     hopp_results,REgen = opt_tools.make_hopp_results_for_saved_generation(wind_capacity_mw,pv_capacity_mwdc,hopp_site,ned_man,config,REgen)
     #     lcoh,wind_size_mw,pv_size_mwdc, h2_storage_capac = run_simple_single_simulation(ned_man,ned_out,config,hopp_site,wind_capacity_mw,pv_capacity_mwac,include_battery,output_level=5,hopp_results=hopp_results)
     # else:
-    lcoh,wind_size_mw,pv_size_mwdc, h2_storage_capac = run_simple_single_simulation(ned_man,ned_out,config,hopp_site,wind_capacity_mw,pv_capacity_mwac,include_battery,output_level=5)
+    lcoh,wind_size_mw,pv_size_mwdc, h2_storage_capac, elec_cf = run_simple_single_simulation(ned_man,ned_out,config,hopp_site,wind_capacity_mw,pv_capacity_mwac,include_battery,output_level=5)
 
-    opt_log.info("wind: {} MW ---- pv: {}MWdc ---- LCOH ${}/kg".format(wind_capacity_mw,pv_capacity_mwdc,lcoh))
+    # opt_log.info("wind: {} MW ---- pv: {}MWdc ---- LCOH ${}/kg".format(wind_capacity_mw,pv_capacity_mwdc,lcoh))
     
     opt_sim_res = SimulationResults(
-        optimization_desc=re_plant_desc,
+        atb_scenario = ned_man.baseline_atb_case,
+        re_plant_type = re_plant_desc,
+        h2_storage_type = ned_man.baseline_h2_storage_type,
+        # optimization_desc=re_plant_desc,
         x_names = col_order,
         x_values_input = x,
         wind_size_mw_actual=wind_size_mw,
         pv_size_mwdc_actual=pv_size_mwdc,
-        y_name = "lcoh-{}".format(extra_desc),
+        y_name = merit_figure,
         y_value = lcoh,
-        h2_storage_capacity=h2_storage_capac)
+        h2_storage_capacity=h2_storage_capac,
+        electrolyzer_cf=elec_cf)
     OptRes.add_simulation_results(opt_sim_res)
     return lcoh
 
@@ -73,10 +77,12 @@ def objective_func(x,ned_man,ned_out,config,hopp_site,include_battery,col_order,
     
 #     pass
 # def optimize_design(ned_site,ned_man,ned_out,config,hopp_site,re_plant_desc:str,OptRes:OptimizationResults,extra_desc):
-def optimize_design(ned_site,ned_man,ned_out,config,hopp_site,re_plant_desc:str,OptRes:OptimizationResults,merit_figure,h2_storage_type):
-    extra_desc = "{}-{}".format(merit_figure.replace("lcoh-",""),h2_storage_type)
+def optimize_design(ned_site,ned_man,ned_out,config,hopp_site,re_plant_desc:str,OptRes:OptimizationResults,merit_figure,h2_storage_type,atb_cost_scenario):
+    # extra_desc = "{}-{}".format(merit_figure.replace("lcoh-",""),h2_storage_type)
     # init_simplex,col_order = ned_site.get_final_simplex_for_plant(re_plant_desc)
-    init_simplex,col_order = ned_site.get_final_simplex_for_hybrid_plant(re_plant_desc,merit_figure)
+    ned_man.baseline_h2_storage_type = h2_storage_type
+    ned_man.baseline_atb_case = atb_cost_scenario
+    init_simplex,col_order = ned_site.get_final_simplex_for_hybrid_plant(re_plant_desc,merit_figure,atb_cost_scenario)
     # bnds = (wind_bounds,solar_bounds)
     opt_log.info("RE Plant: {}".format(re_plant_desc))
     # bnds = ned_site.get_bounds_for_plant_design(re_plant_desc)
@@ -93,7 +99,7 @@ def optimize_design(ned_site,ned_man,ned_out,config,hopp_site,re_plant_desc:str,
     ntol = None
     opts.update({"initial_simplex":init_simplex})
     x0 = init_simplex[0]
-    res = minimize(objective_func,x0,args=(ned_man,ned_out,config,hopp_site,include_battery,col_order,re_plant_desc,OptRes,extra_desc),method = methd,bounds = bnds,tol=ntol,options=opts)
+    res = minimize(objective_func,x0,args=(ned_man,ned_out,config,hopp_site,include_battery,col_order,re_plant_desc,OptRes,merit_figure),method = methd,bounds = bnds,tol=ntol,options=opts)
     return res
 
 

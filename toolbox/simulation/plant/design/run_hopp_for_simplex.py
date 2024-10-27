@@ -1,18 +1,67 @@
-from toolbox.simulation.plant.design.site_simplex import SiteSimplex
+# from toolbox.simulation.plant.design.site_simplex import SiteSimplex
 import numpy as np
-
+from toolbox.simulation.results import NedOutputs
+# from toolbox.simulation.ned_site import Site
+from toolbox.simulation.run_offgrid_onshore import sweep_atb_cost_cases
 from toolbox.simulation.run_single_case import run_simple_single_simulation
 import toolbox.simulation.plant.design.optimization_tools as opt_tools
 import toolbox.simulation.greenheart_management as gh_mgmt
 from hopp.simulation.hybrid_simulation import HybridSimulation
-
+import pandas as pd
 from hopp.simulation.technologies.dispatch.hybrid_dispatch_builder_solver import HybridDispatchBuilderSolver
 from hopp.simulation.technologies.battery import Battery
 from hopp.simulation.technologies.grid import Grid
-
+import os
 from hopp.simulation.hybrid_simulation import HybridSimulationOutput,HybridSimulation
 from toolbox.utilities.ned_logger import site_logger as slog
 
+def convert_ned_out_to_simplex(ned_out,wind_size_mw,pv_size_mwdc,include_battery,save_simplex_detailed = True):
+    simplex_keys = ["wind_size_mw","pv_size_mwdc","battery"] #,"lcoh-delivered","lcoh-produced"]
+    
+    design_keys = ["wind_size_mw","pv_size_mwdc","battery"]
+    design_vals = [wind_size_mw,pv_size_mwdc,include_battery]
+    
+    if save_simplex_detailed:
+        lcoh_summary = ned_out.make_LCOH_detailed_results()
+        d_lcoh_keys = ["lcoh-delivered","lcoh-delivered_pf_config"]
+        p_lcoh_keys = ["lcoh-produced","lcoh-produced_pf_config"]
+        d_lcoh_mapper = {"lcoh":"lcoh-delivered","lcoh_pf_config":"lcoh-delivered_pf_config"}
+        p_lcoh_mapper = {"lcoh":"lcoh-produced","lcoh_pf_config":"lcoh-produced_pf_config"}
+    else:
+        lcoh_summary = ned_out.make_LCOH_summary_results()
+        d_lcoh_keys = ["lcoh-delivered"]
+        p_lcoh_keys = ["lcoh-produced"]
+        d_lcoh_mapper = {"lcoh":"lcoh-delivered"}
+        p_lcoh_mapper = {"lcoh":"lcoh-produced"}
+    simplex_keys += d_lcoh_keys
+    simplex_keys += p_lcoh_keys
+    lcoh_keys = ["atb_scenario","atb_year","re_plant_type","h2_transport_design"]
+    
+    # lcoh_produced = lcoh_summary[lcoh_summary["h2_storage_type"]=="none"]
+    # lcoh_produced = lcoh_produced.rename(columns={"lcoh":"lcoh-produced"})
+    lcoh_produced = lcoh_summary[lcoh_summary["h2_storage_type"]=="none"]
+    lcoh_produced = lcoh_produced.rename(columns=p_lcoh_mapper)
+    
+    # lcoh_delivered = lcoh_summary[lcoh_summary["h2_storage_type"]!="none"]
+    # lcoh_delivered = lcoh_delivered.rename(columns={"lcoh":"lcoh-delivered"})
+    lcoh_delivered = lcoh_summary[lcoh_summary["h2_storage_type"]!="none"]
+    lcoh_delivered = lcoh_delivered.rename(columns=d_lcoh_mapper)
+    
+    # lcoh_simplex = pd.merge(left=lcoh_delivered[["lcoh-delivered"]+lcoh_keys],right=lcoh_produced[["lcoh-produced"]+lcoh_keys],on=["atb_scenario","atb_year","h2_transport_design","re_plant_type"])
+    lcoh_simplex = pd.merge(left=lcoh_delivered[d_lcoh_keys+lcoh_keys],right=lcoh_produced[p_lcoh_keys+lcoh_keys],on=["atb_scenario","atb_year","h2_transport_design","re_plant_type"])
+    
+    design = pd.DataFrame([design_vals]*len(lcoh_simplex),columns=design_keys)
+    lcoh_simplex = pd.concat([design,lcoh_simplex],axis=1)
+    lcoh_simplex = lcoh_simplex[simplex_keys + lcoh_keys]
+    
+    if save_simplex_detailed:
+        lcoe_summary = ned_out.make_LCOE_detailed_results()
+    else:
+        lcoe_summary = ned_out.make_LCOE_summary_results()
+    lcoe_simplex = pd.concat([design,lcoe_summary],axis=1)
+
+    new_ned_out = NedOutputs.from_dict(ned_out.as_dict())
+    return lcoh_simplex,lcoe_simplex,new_ned_out
 def update_hopp_for_generation_profiles(hybrid_plant,wind_size_mw,wind_generation_profile,desired_schedule_kw,interconnect_kw):
     
     
@@ -137,13 +186,13 @@ def get_objects_and_profiles_for_simlplex_battery(unique_wind_sizes_mw,unique_pv
 
     wind_profiles = {}
     pv_battery_hybrid_plants = {}
-    simplex_results = {}
+    # simplex_results = {}
     parametric_sweep_results = {}
     include_battery = True
     generation_tracker = {} #new
     
     delivery_keys = ["h2_pipe_array","h2_transport_compressor","h2_transport_pipeline","h2_storage"]
-    simplex_keys = ["wind_size_mw","pv_size_mwdc","battery","lcoh-delivered","lcoh-produced"]
+    # simplex_keys = ["wind_size_mw","pv_size_mwdc","battery","lcoh-delivered","lcoh-produced"]
     extra_data_keys = ["wind_size_mw","pv_size_mwdc","battery","lcoh-delivered","lcoh-produced","Electrolyzer CF","H2 Storage Size [kg]"]
     
     for ii in range(len(unique_wind_sizes_mw)):
@@ -193,15 +242,15 @@ def get_objects_and_profiles_for_simlplex_battery(unique_wind_sizes_mw,unique_pv
         config = update_config_for_lcoh_delivered(config,ned_man,ned_site)
         
         
-        simplex_vals = [wind_capacity_mw,pv_capacity_mwdc,include_battery,lcoh_delivered,lcoh_produced]
-        simplex_results.update({ii:dict(zip(simplex_keys,simplex_vals))})
+        # simplex_vals = [wind_capacity_mw,pv_capacity_mwdc,include_battery,lcoh_delivered,lcoh_produced]
+        # simplex_results.update({ii:dict(zip(simplex_keys,simplex_vals))})
 
         extra_data_vals = [wind_capacity_mw,pv_capacity_mwdc,include_battery,lcoh_delivered,lcoh_produced,electrolyzer_physics_results["H2_Results"]["Life: Capacity Factor"], h2_storage_capacity]
         parametric_sweep_results.update({ii:dict(zip(extra_data_keys,extra_data_vals))})
 
-    return wind_profiles,pv_battery_hybrid_plants,simplex_results, parametric_sweep_results #, generation_tracker
+    return wind_profiles,pv_battery_hybrid_plants, parametric_sweep_results #, generation_tracker
 
-def loop_wind_solar_battery_designs(unique_wind_sizes_mw,unique_pv_sizes_mwac,ned_site,ned_man,ned_out,config,hopp_site,wind_profiles = None):
+def loop_wind_solar_battery_designs(unique_wind_sizes_mw,unique_pv_sizes_mwac,ned_site,ned_man,ned_out,config,hopp_site,wind_profiles = None,save_detailed=True):
     interconnect_kw = ned_man.electrolyzer_size_mw*1e3
     desired_schedule_kw = interconnect_kw*config.greenheart_config["electrolyzer"]["turndown_ratio"]
     include_battery = True
@@ -211,16 +260,24 @@ def loop_wind_solar_battery_designs(unique_wind_sizes_mw,unique_pv_sizes_mwac,ne
         unique_wind_sizes_for_simplex += [np.min(unique_wind_sizes_mw)]
         unique_wind_sizes_for_simplex = np.array(unique_wind_sizes_for_simplex)
         
-        wind_profiles_new,pv_battery_hybrid_plants,simplex_results,extra_data_results = get_objects_and_profiles_for_simlplex_battery(unique_wind_sizes_for_simplex,unique_pv_sizes_mwac,ned_site,ned_man,ned_out,config,hopp_site)
+        wind_profiles_new,pv_battery_hybrid_plants,extra_data_results = get_objects_and_profiles_for_simlplex_battery(unique_wind_sizes_for_simplex,unique_pv_sizes_mwac,ned_site,ned_man,ned_out,config,hopp_site)
     else:
         wind_profiles = {}
-        wind_profiles_new,pv_battery_hybrid_plants,simplex_results,extra_data_results = get_objects_and_profiles_for_simlplex_battery(unique_wind_sizes_mw,unique_pv_sizes_mwac,ned_site,ned_man,ned_out,config,hopp_site)
+        wind_profiles_new,pv_battery_hybrid_plants,extra_data_results = get_objects_and_profiles_for_simlplex_battery(unique_wind_sizes_mw,unique_pv_sizes_mwac,ned_site,ned_man,ned_out,config,hopp_site)
     wind_profiles.update(wind_profiles_new)
+    #save wind generation profiles
+    wind_profile_filename = "{}-{}_{}-{}--WindGenerationProfiles.pkl".format(ned_site.id,ned_site.latitude,ned_site.longitude,ned_site.state.replace(" ",""))
+    wind_profile_filepath = os.path.join(ned_man.output_directory,wind_profile_filename)
+    pd.Series(wind_profiles).to_pickle(wind_profile_filepath)
+    slog.info("Site {}: saved wind generation profiles".format(ned_site.id,unique_wind_sizes_mw))
 
-    cnt = max(list(simplex_results.keys())) + 1
-
-    delivery_keys = ["h2_pipe_array","h2_transport_compressor","h2_transport_pipeline","h2_storage"]
-    simplex_keys = ["wind_size_mw","pv_size_mwdc","battery","lcoh-delivered","lcoh-produced"]
+    cnt = max(list(extra_data_results.keys())) + 1
+    #below is new
+    lcoh_simplex_res = pd.DataFrame()
+    lcoe_simplex_res = pd.DataFrame()
+    #above is new
+    # delivery_keys = ["h2_pipe_array","h2_transport_compressor","h2_transport_pipeline","h2_storage"]
+    # simplex_keys = ["wind_size_mw","pv_size_mwdc","battery","lcoh-delivered","lcoh-produced"]
     extra_data_keys = ["wind_size_mw","pv_size_mwdc","battery","lcoh-delivered","lcoh-produced","Electrolyzer CF","H2 Storage Size [kg]"]
     for pi,pv_size_mwdc in enumerate(list(pv_battery_hybrid_plants.keys())):
         # print("pi: {}".format(pi))
@@ -234,85 +291,43 @@ def loop_wind_solar_battery_designs(unique_wind_sizes_mw,unique_pv_sizes_mwac,ne
             slog.debug("Site {}: {} MW wind, {} MWdc solar".format(ned_site.id,wind_size_mw,pv_size_mwdc))
             wind_generation_profile = wind_profiles[wind_size_mw]
             
-            # RUN WITH BATTERY
+            # ----- RUN WITH BATTERY ----- 
             hopp_results = update_hopp_for_generation_profiles(hybrid_plant,wind_size_mw,wind_generation_profile,desired_schedule_kw,interconnect_kw)
-
             
             hopp_results = opt_tools.update_hopp_costs_for_sizes(hopp_results,ned_man,wind_size_mw,pv_size_mwac,include_battery)
             hopp_results = gh_mgmt.update_hopp_costs(hopp_results,ned_man.atb_cost_cases_hopp[ned_man.baseline_atb_case])
-            lcoh_delivered, hopp_results, capex_breakdown, opex_breakdown_annual, wind_cost_results, electrolyzer_physics_results, config, h2_storage_capacity = run_simple_single_simulation(ned_man,ned_out,config,hopp_site,wind_size_mw,pv_size_mwac,include_battery=True,output_level=8,hopp_results=hopp_results)
+            # lcoh_delivered, hopp_results, capex_breakdown, opex_breakdown_annual, wind_cost_results, electrolyzer_physics_results, config, h2_storage_capacity = run_simple_single_simulation(ned_man,ned_out,config,hopp_site,wind_size_mw,pv_size_mwac,include_battery=True,output_level=8,hopp_results=hopp_results)
             
-            # if wind_size_mw==900.0 and pv_size_mwdc==241.2:
-            #     print("-----------------------")
-            #     print("--- LCOH delivered: run 02 ---")
-            #     print("pi: {} --- wi: {}".format(pi,wi))
-            #     print("wind_size_mw: {}".format(wind_size_mw))
-            #     print("pv_size_mwdc: {}".format(pv_size_mwdc))
-            #     print("capex_breakdown:")
-            #     print("\n".join("\t{}: \t{}".format(k, v) for k, v in capex_breakdown.items() if v!=0))
-            #     print("opex_breakdown:")
-            #     print("\n".join("\t{}: \t{}".format(k, v) for k, v in opex_breakdown_annual.items() if v!=0))
-            #     print("-----------------------")
-            # Calc LCOH PRoduced
-            for item in capex_breakdown.keys():
-                if item in delivery_keys:
-                    capex_breakdown.update({item:0.0})
-            for item in opex_breakdown_annual.keys():
-                if item in delivery_keys:
-                    opex_breakdown_annual.update({item:0.0})
-                
-            config = update_config_for_lcoh_produced(config)
-            lcoh_produced, pf_lcoh, lcoh_res = gh_mgmt.calc_offgrid_lcoh(
-                hopp_results,
-                capex_breakdown,
-                opex_breakdown_annual,
-                wind_cost_results,
-                electrolyzer_physics_results,
-                total_accessory_power_renewable_kw = 0.0,
-                total_accessory_power_grid_kw = 0.0,
-                config = config,
-                )
-            config = update_config_for_lcoh_delivered(config,ned_man,ned_site)
-            simplex_vals = [wind_size_mw,pv_size_mwdc,include_battery,lcoh_delivered,lcoh_produced]
-            simplex_results.update({cnt:dict(zip(simplex_keys,simplex_vals))})
-
-            extra_data_vals = [wind_size_mw,pv_size_mwdc,include_battery,lcoh_delivered,lcoh_produced,electrolyzer_physics_results["H2_Results"]["Life: Capacity Factor"], h2_storage_capacity]
+            #below is new
+            total_accessory_power_renewable_kw = 0.0
+            total_accessory_power_grid_kw = 0.0
+            re_plant_desc = "wind-pv-battery"
+            capex_breakdown, opex_breakdown_annual, wind_cost_results, electrolyzer_physics_results, h2_prod_store_results, h2_transport_results, offshore_component_results = run_simple_single_simulation(ned_man,ned_out,config,hopp_site,wind_size_mw,pv_size_mwac,include_battery=True,output_level=9,hopp_results=hopp_results,run_lcoh=False)
+            # h2_storage_capacity = h2_prod_store_results[1]["h2_storage_capacity_kg"]
+            ned_out = sweep_atb_cost_cases(ned_site,ned_man,ned_out,re_plant_desc,hopp_results,electrolyzer_physics_results,h2_prod_store_results,h2_transport_results,offshore_component_results,config,total_accessory_power_renewable_kw,wind_cost_results,total_accessory_power_grid_kw,sweep_incentives = False, new_h2_storage_type = "none")
+            lcoh_simplex,lcoe_simplex,ned_out = convert_ned_out_to_simplex(ned_out,wind_size_mw,pv_size_mwdc,include_battery,save_simplex_detailed=save_detailed)
+            lcoh_simplex_res = pd.concat([lcoh_simplex_res,lcoh_simplex],axis=0)
+            lcoe_simplex_res = pd.concat([lcoe_simplex_res,lcoe_simplex],axis=0)
+            extra_data_vals = [wind_size_mw,pv_size_mwdc,include_battery,lcoh_simplex.iloc[1]["lcoh-delivered"],lcoh_simplex.iloc[1]["lcoh-produced"],electrolyzer_physics_results["H2_Results"]["Life: Capacity Factor"], h2_prod_store_results[1]["h2_storage_capacity_kg"]]
             extra_data_results.update({cnt:dict(zip(extra_data_keys,extra_data_vals))})
             cnt +=1
 
-            # RUN WITHOUT BATTERY
+            # ----- RUN WITHOUT BATTERY ----- 
+            re_plant_desc = "wind-pv"
             hopp_results["combined_hybrid_power_production_hopp"] =  wind_generation_profile + pv_generation_profile_kwac
-
-            lcoh_delivered, hopp_results_nobat, capex_breakdown, opex_breakdown_annual, wind_cost_results, electrolyzer_physics_results, config, h2_storage_capacity = run_simple_single_simulation(ned_man,ned_out,config,hopp_site,wind_size_mw,pv_size_mwac,include_battery=False,output_level=8,hopp_results=hopp_results)
+            capex_breakdown, opex_breakdown_annual, wind_cost_results, electrolyzer_physics_results, h2_prod_store_results, h2_transport_results, offshore_component_results = run_simple_single_simulation(ned_man,ned_out,config,hopp_site,wind_size_mw,pv_size_mwac,include_battery=False,output_level=9,hopp_results=hopp_results,run_lcoh=False)
             capex_breakdown.update({"battery":0.0})
             opex_breakdown_annual.update({"battery":0.0})
-            for item in capex_breakdown.keys():
-                if item in delivery_keys:
-                    capex_breakdown.update({item:0.0})
-            for item in opex_breakdown_annual.keys():
-                if item in delivery_keys:
-                    opex_breakdown_annual.update({item:0.0})
-                
-            config = update_config_for_lcoh_produced(config)
-            lcoh_produced, pf_lcoh, lcoh_res = gh_mgmt.calc_offgrid_lcoh(
-                hopp_results_nobat,
-                capex_breakdown,
-                opex_breakdown_annual,
-                wind_cost_results,
-                electrolyzer_physics_results,
-                total_accessory_power_renewable_kw = 0.0,
-                total_accessory_power_grid_kw = 0.0,
-                config = config,
-                )
-            config = update_config_for_lcoh_delivered(config,ned_man,ned_site)
-            simplex_vals = [wind_size_mw,pv_size_mwdc,False,lcoh_delivered,lcoh_produced]
-            simplex_results.update({cnt:dict(zip(simplex_keys,simplex_vals))})
-
-            extra_data_vals = [wind_size_mw,pv_size_mwdc,False,lcoh_delivered,lcoh_produced,electrolyzer_physics_results["H2_Results"]["Life: Capacity Factor"], h2_storage_capacity]
+            # below is new
+            ned_out = sweep_atb_cost_cases(ned_site,ned_man,ned_out,re_plant_desc,hopp_results,electrolyzer_physics_results,h2_prod_store_results,h2_transport_results,offshore_component_results,config,total_accessory_power_renewable_kw,wind_cost_results,total_accessory_power_grid_kw,sweep_incentives = False, new_h2_storage_type = "none")
+            lcoh_simplex_nobat,lcoe_simplex_nobat,ned_out = convert_ned_out_to_simplex(ned_out,wind_size_mw,pv_size_mwdc,False,save_simplex_detailed=save_detailed)
+            lcoh_simplex_res = pd.concat([lcoh_simplex_res,lcoh_simplex_nobat],axis=0)
+            lcoe_simplex_res = pd.concat([lcoe_simplex_res,lcoe_simplex_nobat],axis=0)
+            # above is new
+            extra_data_vals = [wind_size_mw,pv_size_mwdc,False,lcoh_simplex.iloc[1]["lcoh-delivered"],lcoh_simplex.iloc[1]["lcoh-produced"],electrolyzer_physics_results["H2_Results"]["Life: Capacity Factor"], h2_prod_store_results[1]["h2_storage_capacity_kg"]]
             extra_data_results.update({cnt:dict(zip(extra_data_keys,extra_data_vals))})
             cnt +=1
-            
 
-    return wind_profiles,simplex_results,extra_data_results
+    return wind_profiles, extra_data_results, lcoh_simplex_res, lcoe_simplex_res
     # lcoh, hopp_results_battery, electrolyzer_physics_results = run_simple_single_simulation(ned_man,ned_out,config,hopp_site,wind_size_mw_init,pv_size_mwac_init,include_battery=True,output_level=2)
     
