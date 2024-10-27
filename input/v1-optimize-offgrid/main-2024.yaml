@@ -1,0 +1,85 @@
+sitelist: "ned_final_sitelist_50082locs.csv"
+hpc_or_local: "HPC" #"HPC" or "local" 
+resource_year: 2013
+atb_year: 2024
+electrolyzer_size_mw: 720
+renewable_resource_origin: "API" #"HPC"
+env_path: "/scratch/egrant/NED/.env"
+sweep_name: "offgrid-optimized"
+# re_plant_capacity_multiplier: 1.0
+optimize_design: True
+site_resolution_km: 11.5
+run_battery_for_ancillary_power: True
+ancillary_power_solver_method: "simple_solver" 
+re_plant_types: #unused for optimization
+  wind: 1.0 #unused for optimization
+  wind-battery: 1.0 #unused for optimization
+  wind-pv: 0.5 #unused for optimization
+  wind-pv-battery: 0.5 #unused for optimization
+  pv: 1.0 #unused for optimization
+  pv-battery: 1.0 #unused for optimization
+subsweep_name: "hybrid_renewables" 
+output_dir: "/projects/hopp/ned-results/v1"
+hpc_resource_info:
+  wtk_source_path: "/kfs2/datasets/WIND/conus/v1.0.0"
+  nsrdb_source_path: "/kfs2/datasets/NSRDB/deprecated_v3"
+
+root_filename_atb_cost_cases: "finance/ATB2024_technology_cost_cases_2022USD_"
+root_filename_atb_cost_cases_hopp: "finance/hopp_cost_info_"
+root_filename_profast_config: "finance/profast_config_onshore_v1_"
+
+
+filename_greenheart_config: "greenheart_hopp_config/greenheart_config_onshore_template_atb2022.yaml"
+filename_hopp_config: "greenheart_hopp_config/hopp_config_template.yaml"
+filename_floris_config: "wind/floris_generic_input.yaml"
+filename_turbine_config: "wind/turbines/ATB2024_6MW_170RD_floris_turbine.yaml"
+
+cost_cases: ["Conservative","Moderate","Advanced"]
+h2_storage_transport_info:
+  0:
+    h2_storage_type: "none"
+    plant_design_num: 0
+    requires_power:  False
+    distance_to_storage_key:
+  1:
+    h2_storage_type: "pipe"
+    plant_design_num: 0
+    requires_power:  False
+    distance_to_storage_key:
+  2:
+    h2_storage_type: "salt_cavern"
+    plant_design_num: 1
+    requires_power:  True
+    distance_to_storage_key: "distance_to_salt_cavern"
+  3:
+    h2_storage_type: "lined_rock_cavern"
+    plant_design_num: 1
+    requires_power:  True
+    distance_to_storage_key: "distance_to_rock_cavern"
+baseline_options:
+  baseline_atb_case: "Moderate"
+  baseline_incentive_option: 1
+  baseline_h2_storage_type: "pipe"
+greenheart_config_defaults:
+  verbose: False
+  show_plots: False
+  save_plots: False
+  use_profast: True
+  post_processing: False
+  output_level: 1 #https://github.com/elenya-grant/HOPP/blob/f6ac0414c07e3a7346e6272772b702548991e8d4/greenheart/simulation/greenheart_simulation.py#L1050
+
+output_info:
+  save_data:
+    save_summary_results: 
+      flag: True
+      save_separately: False
+    save_detailed_results:
+      flag: True #saves all detailed results 
+      save_separately: True
+      save_lcoe_cost_breakdown: False
+      save_lcoh_cost_breakdown: False
+    save_some_detailed_results: #only used if save_detailed_results flag is False
+      flag: False
+      save_LCOH: False
+      save_LCOE: False
+      save_timeseries: True

@@ -1,0 +1,88 @@
+# https://www.nrel.gov/docs/fy23osti/87303.pdf
+# - PV costs relevant for 50-200 MWdc systems
+general:
+  output_folder:
+  use_previous_run_results: False
+
+optimization_cases:
+  # - "wind"
+  - "wind-pv"
+  # - "pv"
+  # - "wind-battery"
+  - "wind-pv-battery"
+  # - "pv-battery"
+design_variables:
+  wind_size_mw:
+    re_plant: "wind"
+    flag: True
+    lower: 60. #000.0 #200 MW is ATB reference
+    upper: 2000.0 #000.0 #200 MW
+    step: 6.0 #000.0 #equivalent to turbine size
+    units: "MW"
+    simplex_keyname: "Wind: System Capacity [kW]"
+    simplex_key_multiplier: 0.001
+    extra_simplex_sizes: [60.0, 900.0, 1260.0, 1440.0] #[1.25,1.75,2] [1000.0,1500.0]
+    initial_simplex_sizes: [180.0, 360.0, 540.0, 720.0, 1080.0]
+  pv_size_mwdc:
+    re_plant: "pv"
+    flag: True
+    lower: 50.0 #000.0 #100 MWdc, 74.6 MWac from ATB 
+    upper: 2000.0
+    step: 5.0
+    units: "MWdc"
+    simplex_keyname: "PV: System Capacity [kW-DC]"
+    simplex_key_multiplier: 0.001
+    extra_simplex_sizes: [80.4, 1206.0, 1688.4, 1929.6] #[1000.0,1500.0]
+    initial_simplex_sizes: [241.2, 482.4, 723.6, 964.8, 1447.2]
+
+merit_figures: 
+  lcoh-delivered:
+    previous_results_simplex:
+      h2_storage_type: "pipe" #"pipe"
+      h2_storage_desc: "on-site"
+      h2_transport_desc: "colocated"
+      atb_scenario: "Moderate"
+      atb_year: 2024
+      policy_scenario: "1"
+      version: 1
+      sweep_name: "offgrid-baseline"
+      subsweep_names: ["equal-sized","under-sized","over-sized"]
+      # simplex_keyname_base: "LCOH [$/kg]:"
+
+  lcoh-produced:
+    previous_results_simplex:
+      h2_storage_type: "none" #"pipe"
+      h2_storage_desc: "on-site"
+      h2_transport_desc: "colocated"
+      atb_scenario: "Moderate"
+      atb_year: 2024
+      policy_scenario: "1"
+      version: 1
+      sweep_name: "offgrid-baseline"
+      subsweep_names: ["equal-sized","under-sized","over-sized"]
+      # simplex_keyname_base: "LCOH [$/kg]:"
+
+driver:
+  optimization:
+    type: "NelderMead"
+    maxiter: 20
+    xatol: 6 #6 MW for wind?
+    fatol: 0.1
+    adaptive: True
+    disp: False
+    ntol: #None
+  design_of_simplex:
+    h2_storage_type: "pipe" #"pipe"
+    h2_storage_desc: "on-site"
+    h2_transport_desc: "colocated"
+    atb_scenario: "Moderate"
+    atb_year: 2024
+    policy_scenario: "1"
+
+existing_timeseries_info:
+  flag: True
+  storage_desc: "onsite_storage" #only used for baseline cases
+  prev_run_main_output_dir: "/Users/egrant/Documents/projects/NED-toolbox/results" #"/projects/hopp/ned-results/v1" 
+  prev_run_sweep_name: "offgrid-optimized" #"offgrid-baseline"
+  prev_run_subsweep_names: ["pipe"] #["over-sized","equal-sized","under-sized"]
+  prev_run_atb_year: 2025 #2030
