@@ -77,15 +77,19 @@ class SiteSimplex(BaseClassNed):
                 return pv_bounds
     
     def add_full_simplex(self,full_simplex):
+        drop_cols = [k for k in full_simplex.columns.to_list() if "pf_config" in k]
+        if len(drop_cols)>0:
+            full_simplex = full_simplex.drop(columns=drop_cols)
         self.full_simplex = full_simplex
     
     def save_full_simplex(self,output_dir):
         output_filepath = self.get_full_simplex_filename(output_dir)
-        pd.DataFrame(self.full_simplex).T.to_pickle(output_filepath)
+        self.full_simplex.to_pickle(output_filepath)
+        # pd.DataFrame(self.full_simplex).T.to_pickle(output_filepath)
     
     def get_full_simplex_filename(self,output_dir):
         output_filepath_root = os.path.join(output_dir,"{}-{}_{}-{}".format(self.id,self.latitude,self.longitude,self.state.replace(" ","")))
-        full_simplex_filename =  output_filepath_root + "--Simplex.pkl"
+        full_simplex_filename =  output_filepath_root + "--LCOH_Simplex.pkl"
         return full_simplex_filename
         
     def get_extra_data_simplex_filename(self,output_dir):
@@ -96,11 +100,11 @@ class SiteSimplex(BaseClassNed):
     #     temp_df = pd.DataFrame(vals,columns = [re_plant_type + merit_figure],index=keys).T
     #     self.optimization_tracker = pd.concat([self.optimization_tracker,temp_df],axis=0)
     
-    def add_optimization_res(self,optimization_res,re_plant_desc,merit_figure):
+    def add_optimization_res(self,optimization_res,re_plant_desc,merit_figure,atb_cost_scenario):
         if len(self.optimization_tracker)==0:
-            self.optimization_tracker = pd.Series(optimization_res,name=re_plant_desc + ": " + merit_figure)
+            self.optimization_tracker = pd.Series(optimization_res,name=re_plant_desc + "-{}: ".format(atb_cost_scenario) + merit_figure)
         else:
-            temp = pd.Series(optimization_res,name=re_plant_desc + ": " + merit_figure)
+            temp = pd.Series(optimization_res,name=re_plant_desc + "-{}: ".format(atb_cost_scenario) + merit_figure)
         
             self.optimization_tracker = pd.concat([temp,self.optimization_tracker],axis=1)
     
@@ -118,11 +122,12 @@ class SiteSimplex(BaseClassNed):
         output_filepath =  output_filepath_root + "--Optimized_DesignResults.pkl"
         self.optimization_simplex.to_pickle(output_filepath)
 
-    def get_final_simplex_for_hybrid_plant(self,re_plant_desc,merit_figure):
+    def get_final_simplex_for_hybrid_plant(self,re_plant_desc,merit_figure,atb_cost_scenario):
         if "battery" in re_plant_desc:
             data = self.full_simplex[self.full_simplex["battery"]==True]
         else:
             data = self.full_simplex[self.full_simplex["battery"]==False]
+        data = data[data["atb_scenario"]==atb_cost_scenario]
         n = 2
         cols = ["wind","pv"]
         sorted_df = data.sort_values(merit_figure,ascending=True)
@@ -130,7 +135,9 @@ class SiteSimplex(BaseClassNed):
         initial_simplex = np.zeros((n+1,n))
         
         for i,re_type in enumerate(cols):
-            col = self.design_variables_mapper[re_type]
+            col = [k for k in self.full_simplex.columns.to_list() if re_type in k]
+            col = col[0]
+            # col = self.design_variables_mapper[re_type]
             initial_simplex[:,i] = np.array(initial_simplex_df[col].to_list())
         return initial_simplex,cols
     def get_hybrid_sizes_for_making_full_simplex(self):

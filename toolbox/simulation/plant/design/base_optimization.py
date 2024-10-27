@@ -71,22 +71,33 @@ class NelderMeadInputConfig(FromDictMixin):
 
 @define
 class SimulationResults(FromDictMixin):
-    optimization_desc: str
+    # optimization_desc: str
+    atb_scenario: str
+    re_plant_type: str
+    h2_storage_type: str
     x_names: List[str]
     x_values_input: List[str]
     wind_size_mw_actual: float
     pv_size_mwdc_actual: float
     y_name: str
     y_value: float
-    h2_storage_capacity: float
+    h2_storage_capacity: Optional[float]
+    electrolyzer_cf: Optional[float]
     
     # def __attrs_post_init__(self):
     #     self.h2_storage_capacity = []
     
     def create_to_summary(self):
         d = self.as_dict()
-        summary = {k:v for k,v in d.items()}
 
+        summary = {k:v for k,v in d.items()}
+        y_name = summary.pop("y_name")
+        y_val = summary.pop("y_value")
+        summary.update({y_name:y_val})
+        x_names = summary.pop("x_names")
+        x_vals = summary.pop("x_values_input")
+        for ii in range(len(x_names)):
+            summary.update({x_names[ii]:x_vals[ii]})
         return summary
 
 
