@@ -228,14 +228,29 @@ def run_site_optimization(site_info,site_simplex,ned_manager_dict,config_input_d
    
 if __name__=="__main__":
     atb_year = 2025 #2025
-    input_filepath = INPUT_DIR/"v1-optimize-offgrid/main-{}.yaml".format(atb_year)
+    if atb_year == 2030:
+        input_filepath = INPUT_DIR/"v1-optimize-offgrid/main-{}-rerun.yaml".format(atb_year)
+    else:
+        input_filepath = INPUT_DIR/"v1-optimize-offgrid/main-{}.yaml".format(atb_year)
     optimization_filepath = INPUT_DIR/"v1-optimize-offgrid/optimize_config_{}.yaml".format(atb_year)
     input_config = load_yaml(input_filepath)
     optimization_config = load_yaml(optimization_filepath)
+    
+    # --- if local --- 
     input_config["hpc_or_local"] = "local"
     input_config["renewable_resource_origin"] = "API"
     if "env_path" in input_config:
         input_config.pop("env_path")
+    previous_run_dir_local = "/Users/egrant/Documents/projects/NED-toolbox/results"
+    optimization_config["existing_timeseries_info"].update({"prev_run_main_output_dir":previous_run_dir_local})
+
+    # --- if hpc --- 
+    input_config.update({"renewable_resource_origin":"HPC"}) #"API" or "HPC"
+    input_config.update({"hpc_or_local":"HPC"})
+    input_config.update({"output_dir":"/projects/hopp/ned-results/v1"})
+    previous_run_dir_hpc = "/projects/hopp/ned-results/v1"
+    optimization_config["existing_timeseries_info"].update({"prev_run_main_output_dir":previous_run_dir_hpc})
+
     site_id = 14740 #1
     ned_manager_dict,config_input_dict,ned_output_config_dict,site_list,sitelist_simplex = opt_tools.initialize_optimization_data(input_config,optimization_config)
     site_info = site_list.loc[site_id].to_dict()
