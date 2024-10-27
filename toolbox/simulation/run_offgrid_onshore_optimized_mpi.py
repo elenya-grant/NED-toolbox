@@ -136,9 +136,9 @@ if __name__ == "__main__":
 
     
     # below is to run on HPC
-    # input_config["renewable_resource_origin"] = "HPC" #"API" or "HPC"
-    # input_config["hpc_or_local"] = "HPC"
-    # input_config["output_dir"] = "/projects/hopp/ned-results/v1"
+    # input_config.update({"renewable_resource_origin":"HPC"}) #"API" or "HPC"
+    # input_config.update({"hpc_or_local":"HPC"})
+    # input_config.update({"output_dir":"/projects/hopp/ned-results/v1"})
     # previous_run_dir_hpc = "/projects/hopp/ned-results/v1"
     # optimization_config["existing_timeseries_info"].update({"prev_run_main_output_dir":previous_run_dir_hpc})
     
@@ -155,6 +155,7 @@ if __name__ == "__main__":
     ned_manager_dict,config_input_dict,ned_output_config_dict,site_list,sitelist_simplex = opt_tools.initialize_optimization_data(input_config,optimization_config)
     
     inputs = [ned_manager_dict,config_input_dict,ned_output_config_dict,sitelist_simplex,optimize_designs]
+    
     main_log.info("set up runs")
     end_idx = start_idx + n_sites
     if end_idx>=len(site_list):
