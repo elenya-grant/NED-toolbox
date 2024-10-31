@@ -1,0 +1,18 @@
+
+previous_run_info:
+  atb_year: 2025
+  result_main_dir: "/projects/hopp/ned-results/v1"
+  sweep_name: "offgrid-optimized"
+  subsweep_name: "hybrid_renewables"
+  battery_hours: 4
+  battery_charge_rate_mw: 100
+new_cost_info:
+  save_pf_config: True
+  output_dir_main: "/projects/hopp/ned-results/v1_oldGS"
+  new_atb_year: 2030
+  hopp_cost_filename: "hopp_cost_info_2030.yaml"
+  greenheart_config_filename: "greenheart_config_onshore_template.yaml"
+  atb_cost_filename: "ATB2024_technology_cost_cases_2030.yaml"
+  profast_filename: "profast_config_onshore_v1_2030.yaml"
+  weighted_finances: True
+  weighted_finances_filename: "v1_VRE_H2_weighted_financials.yaml"
