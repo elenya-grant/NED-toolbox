@@ -40,12 +40,16 @@ def do_something(site_config,site_id):
     
     previous_results_dir = os.path.join(site_config["previous_run_info"]["result_main_dir"],site_config["previous_run_info"]["sweep_name"],site_config["previous_run_info"]["subsweep_name"],"ATB_{}".format(site_config["previous_run_info"]["atb_year"]))
     
-    if "sweep_name" in site_config["new_cost_info"]:
-        new_results_dir = os.path.join(site_config["new_cost_info"]["output_dir_main"],site_config["new_cost_info"]["sweep_name"],site_config["previous_run_info"]["subsweep_name"],"ATB_{}".format(site_config["new_cost_info"]["new_atb_year"]))
-    else:
-        new_results_dir = os.path.join(site_config["new_cost_info"]["output_dir_main"],site_config["previous_run_info"]["sweep_name"],site_config["previous_run_info"]["subsweep_name"],"ATB_{}".format(site_config["new_cost_info"]["new_atb_year"]))
     if site_config["new_cost_info"]["weighted_finances"]:
-        new_results_dir = os.path.join(new_results_dir,"weighted_financials")
+        cost_year_weighting_desc = "ATB_{}_weighted".format(site_config["new_cost_info"]["new_atb_year"])
+    else:
+        cost_year_weighting_desc = "ATB_{}".format(site_config["new_cost_info"]["new_atb_year"])
+
+    if "sweep_name" in site_config["new_cost_info"]:
+        new_results_dir = os.path.join(site_config["new_cost_info"]["output_dir_main"],site_config["new_cost_info"]["sweep_name"],site_config["previous_run_info"]["subsweep_name"],cost_year_weighting_desc)
+    else:
+        new_results_dir = os.path.join(site_config["new_cost_info"]["output_dir_main"],site_config["previous_run_info"]["sweep_name"],site_config["previous_run_info"]["subsweep_name"],cost_year_weighting_desc)
+    
 
     if not os.path.isdir(new_results_dir):
         os.makedirs(new_results_dir,exist_ok=True)
