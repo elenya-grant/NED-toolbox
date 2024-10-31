@@ -1,0 +1,14 @@
+previous_run_info:
+  atb_year: 2030
+  result_main_dir: "/projects/hopp/ned-results/v1"
+  sweep_name: "offgrid-baseline"
+new_cost_info:
+  save_pf_config: True
+  output_dir_main: "/projects/hopp/ned-results/v1_GS"
+  new_atb_year: 2025
+  hopp_cost_filename: "hopp_cost_info_2025.yaml"
+  greenheart_config_filename: "greenheart_config_onshore_template_atb2022.yaml"
+  atb_cost_filename: "ATB2024_technology_cost_cases_2022USD_2025.yaml"
+  profast_filename: "profast_config_onshore_v1_2025.yaml"
+  weighted_finances: False
+  weighted_finances_filename:
