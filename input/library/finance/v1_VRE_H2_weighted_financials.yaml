@@ -1,0 +1,12 @@
+vre_finance:
+  debt equity ratio of initial financing: 2.82
+  leverage after tax nominal discount rate: 0.0615
+  debt interest rate: 0.0439
+  total income tax rate: 0.2574
+  capital gains tax rate: 0.15
+h2_finance:
+  debt equity ratio of initial financing: 0.62
+  leverage after tax nominal discount rate: 0.1089
+  debt interest rate: 0.05
+  total income tax rate: 0.2574
+  capital gains tax rate: 0.15
