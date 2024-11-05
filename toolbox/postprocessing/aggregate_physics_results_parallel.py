@@ -33,25 +33,31 @@ def aggregate_files(filelist,results_dir,output_filename_base):
                 physics_vals = list(physics_df.loc[re_plant].loc[h2_design]["renewables_summary"].values()) 
                 columns = list(physics_df.loc[re_plant].loc[h2_design]["renewables_summary"].keys())
                 
-                if "h2_storage_results" in physics_df.loc[re_plant].loc[h2_design]:
-                    h2_storage_cols = [k for k in list(physics_df.loc[re_plant].loc[h2_design]["h2_storage_results"].keys()) if "h2" in k or "hydrogen" in k]
-                    h2_storage_vals = [physics_df.loc[re_plant].loc[h2_design]["h2_storage_results"][k] for k in h2_storage_cols]
-                    physics_vals += h2_storage_vals
-
-                    h2_storage_cols = [k.replace("hydrogen","h2") for k in h2_storage_cols]
-                    columns += h2_storage_cols
+                h2_storage_types = list(physics_df.loc[re_plant].loc[h2_design]["h2_design_results"].keys())
+                h2_storage_type = [k for k in h2_storage_types if "none" not in k]
+                h2_storage_type = h2_storage_type[0]
+        
+                if any("h2_storage" in k for k in physics_df.loc[re_plant].loc[h2_design]["h2_design_results"][h2_storage_type].keys()):
+                # if "h2_storage_results" in physics_df.loc[re_plant].loc[h2_design]:
+                    h2_storage_cols = [k for k in list(physics_df.loc[re_plant].loc[h2_design]["h2_design_results"][h2_storage_type].keys()) if "h2_storage" in k]
+                    h2_pipeline_cols = [k for k in list(physics_df.loc[re_plant].loc[h2_design]["h2_design_results"][h2_storage_type].keys()) if "h2_pipeline" in k]
+                    h2_compressor_cols = [k for k in list(physics_df.loc[re_plant].loc[h2_design]["h2_design_results"][h2_storage_type].keys()) if "transport_compressor" in k]
+                    h2_pipeline_cols = [k for k in h2_pipeline_cols if "[$]" not in k]
                     
+                    h2_storage_vals = [physics_df.loc[re_plant].loc[h2_design]["h2_design_results"][h2_storage_type][k] for k in h2_storage_cols]
+                    h2_pipeline_vals = [physics_df.loc[re_plant].loc[h2_design]["h2_design_results"][h2_storage_type][k] for k in h2_pipeline_cols]
+                    h2_compressor_vals = [physics_df.loc[re_plant].loc[h2_design]["h2_design_results"][h2_storage_type][k] for k in h2_compressor_cols]
 
-                if "h2_transport_pipe_results" in physics_df.loc[re_plant].loc[h2_design]:
-                    pipe_cols = [k for k in list(physics_df.loc[re_plant].loc[h2_design]["h2_transport_pipe_results"].keys()) if "[$]" not in k]
-                    pipe_vals = [physics_df.loc[re_plant].loc[h2_design]["h2_transport_pipe_results"][k] for k in pipe_cols]
-                    physics_vals += pipe_vals
-                    pipe_cols = ["H2 Transport Pipe: {}".format(k) for k in pipe_cols]
-                    columns +=pipe_cols
-                if "h2_transport_compressor_results" in physics_df.loc[re_plant].loc[h2_design]:
-                    comp_cols = [k for k in list(physics_df.loc[re_plant].loc[h2_design]["h2_transport_compressor_results"].keys()) if "opex" not in k or "capex" not in k]
-                    comp_vals = [physics_df.loc[re_plant].loc[h2_design]["h2_transport_compressor_results"][k] for k in comp_cols]
-                    physics_vals += comp_vals
+                    []
+                    # h2_storage_vals = [physics_df.loc[re_plant].loc[h2_design]["h2_storage_results"][k] for k in h2_storage_cols]
+                    physics_vals += h2_storage_vals
+                    columns += h2_storage_cols
+
+                    physics_vals +=h2_pipeline_vals
+                    columns +=h2_pipeline_cols
+
+                    physics_vals += h2_compressor_vals
+                    columns += h2_compressor_cols
                 
                 h2_res_cols = [k for k in list(physics_df.loc[re_plant].loc[h2_design]["h2_results"].keys()) if "Rated BOL" not in k]
                 h2_res_vals = [physics_df.loc[re_plant].loc[h2_design]["h2_results"][k] for k in h2_res_cols]
@@ -66,9 +72,9 @@ def aggregate_files(filelist,results_dir,output_filename_base):
                 reformatted_physics_df = pd.concat([physics_temp,reformatted_physics_df],axis=0)
         reformatted_physics_df.index = reformatted_physics_df.index.set_names(index_keys)
         summary_df = pd.concat([summary_df,reformatted_physics_df],axis=0)
-    
+    summary_df = summary_df.sort_index(axis=0,level="id",ascending=True)
     summary_df.to_pickle(output_filename_base + ".pkl")
-    summary_df.to_csv(output_filename_base + ".csv")
+    # summary_df.to_csv(output_filename_base + ".csv")
     print("saved {}".format(output_filename_base))
 start_time = datetime.now()
 
@@ -118,12 +124,12 @@ def main(full_filelist,result_dir,output_filepath_base_base):
 if __name__ == "__main__":
     # from toolbox import ROOT_DIR, LIB_DIR
     # -------- IF KESTREL --------
-    version = 1
+    version = "v1"
     sweep_name = "offgrid-baseline"
     subsweep_name = "equal-sized"
     atb_year = 2030
-    result_dir = "/projects/hopp/ned-results/v{}/{}/{}/ATB_{}".format(version,sweep_name,subsweep_name,atb_year)
-    summary_dir = "/projects/hopp/ned-results/v{}/aggregated_results".format(version)
+    result_dir = "/projects/hopp/ned-results/{}/{}/{}/ATB_{}".format(version,sweep_name,subsweep_name,atb_year)
+    summary_dir = "/projects/hopp/ned-results/{}/aggregated_results".format(version)
     check_create_folder(summary_dir)
 
     file_desc = "Physics_{}_{}_ATB_{}".format(sweep_name,subsweep_name,atb_year)
