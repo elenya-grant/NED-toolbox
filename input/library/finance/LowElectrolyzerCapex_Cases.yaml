@@ -1,0 +1,27 @@
+wind_cost_year: 2022
+solar_cost_year: 2022
+battery_cost_year: 2022
+electrolyzer_cost_year: 2022
+ATB_year: 
+
+cost_cases:
+  Conservative:
+    electrolyzer:
+      overnight_capex: 750 #[$/kW]
+      fixed_om: 12.8 #[$/kW]
+      var_om: 0.0013 #[$/kWh]
+      refurb_cost: 0.15 #[%]
+
+  Moderate:
+    electrolyzer:
+      overnight_capex: 375
+      fixed_om: 12.8
+      var_om: 0.0013
+      refurb_cost: 0.15 #[%]
+
+  Advanced:
+    electrolyzer:
+      overnight_capex: 0.0 #result in about $100 total capex
+      fixed_om: 12.8
+      var_om: 0.0013
+      refurb_cost: 0.15 #[%]
