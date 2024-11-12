@@ -7,12 +7,12 @@ previous_run_info:
   battery_hours: 4
   battery_charge_rate_mw: 100
 new_cost_info:
-  save_pf_config: True
+  save_pf_config: False
   output_dir_main: "/projects/hopp/ned-results/v1"
   new_atb_year: 2024
   hopp_cost_filename: "hopp_cost_info_2024.yaml"
   greenheart_config_filename: "greenheart_config_onshore_template_atb2022.yaml"
-  atb_cost_filename: "ATB2024_technology_cost_cases_2022USD_2024.yaml"
+  atb_cost_filename: "GreenSteel_ElectrolyzerCosts_2022USD_2024.yaml"
   profast_filename: "profast_config_onshore_v1_2024.yaml"
   weighted_finances: False
   weighted_finances_filename:
