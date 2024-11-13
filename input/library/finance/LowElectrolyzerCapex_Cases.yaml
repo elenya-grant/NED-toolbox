@@ -7,14 +7,14 @@ ATB_year:
 cost_cases:
   Conservative:
     electrolyzer:
-      overnight_capex: 750 #[$/kW]
+      overnight_capex: 1000 #[$/kW]
       fixed_om: 12.8 #[$/kW]
       var_om: 0.0013 #[$/kWh]
       refurb_cost: 0.15 #[%]
 
   Moderate:
     electrolyzer:
-      overnight_capex: 375
+      overnight_capex: 500
       fixed_om: 12.8
       var_om: 0.0013
       refurb_cost: 0.15 #[%]
