@@ -1,0 +1,23 @@
+sweep: "offgrid-optimized"
+subsweep: "hybrid_renewables"
+electrolyzer_cost_cases:
+  - "v1"
+  - "v1_custom"
+  - "v1_pathway"
+atb_years:
+  - 2022
+  - 2024
+  - 2025
+  - 2026
+  - 2030
+finance_cases:
+  - "Brroe_Bder_Brdir.yaml"
+  - "Hrroe_Hder_Hrdir.yaml"
+  - "Rrroe_Rder_Rrdir.yaml"
+  - "Hrroe_Rder_Hrdir.yaml"
+  - "Rrroe_Hder_Rrdir.yaml"
+physics_baseline_case:
+  atb_year: 2025
+  # finance_case: "Brroe_Bder_Brdir.yaml"
+  electrolyzer_cost_case: "v1"
+clean_results_dir: "/projects/hopp/ned-results/v1_clean/param_sweep"
