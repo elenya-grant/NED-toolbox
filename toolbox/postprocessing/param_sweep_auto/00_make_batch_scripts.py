@@ -14,7 +14,7 @@ input_info = load_yaml(input_info_file)
 
 template_names = ["postprocess_finrerun_01_paramsweep_template.sh","postprocess_finrerun_01b_paramsweep_template.sh"]
 job_keys = ["fullparam_job_desc","optimalparam_job_desc"]
-batch_subdirs = ["finrerun_01","finrerun_01b"]
+batch_subdirs = ["finrerun_step01_{}".format(batch_number),"finrerun_step01b_{}".format(batch_number)]
 
 for ii in range(len(template_names)):
     
@@ -48,7 +48,7 @@ for ii in range(len(template_names)):
                         f.write(file_contents)
 
     batch_case_list_filepaths = ["NED-toolbox/{}".format(k.split("NED-toolbox/")[-1]) for k in batch_script_filename_list]
-    batch_case_list_lines = ["{}. [ ] {} \n\t- job name: {} \n\t-``sbatch {}`` ".format(i,case_tracker[i],batch_case_list_filepaths[i],job_name_list[i]) for i in range(len(job_name_list))]
+    batch_case_list_lines = ["{}. [ ] {} \n\t- job name: {} \n\t- ``sbatch {}`` ".format(i,case_tracker[i],batch_case_list_filepaths[i],job_name_list[i]) for i in range(len(job_name_list))]
     batch_case_list_filepath = os.path.join(batch_script_dir,"job_list_{}.md".format(batch_number))
 
     batch_case_list_contents = "\n".join(k for k in batch_case_list_lines)
