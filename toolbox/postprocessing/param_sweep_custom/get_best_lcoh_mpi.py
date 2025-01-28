@@ -12,10 +12,12 @@ save_pf_config = False
 def run_lcoh_chunk_of_sites(sitelist,sites_to_run,input_results_dir,output_filepath):
     res = pd.DataFrame()
     for site_id in sites_to_run:
-        site_res = lcoh_tools.run_min_lcoh_for_site(input_results_dir,site_id,state = sitelist.loc[site_id]["state"],lat = sitelist.loc[site_id]["latitude"],lon=sitelist.loc["longitude"])
+        site_res = lcoh_tools.run_min_lcoh_and_calc_lcoe_for_site(input_results_dir,site_id,sitelist.loc[site_id]["state"],sitelist.loc[site_id]["latitude"],sitelist.loc["longitude"])
+        # site_res = lcoh_tools.run_min_lcoh_for_site(input_results_dir,site_id,state = sitelist.loc[site_id]["state"],lat = sitelist.loc[site_id]["latitude"],lon=sitelist.loc["longitude"])
         res = pd.concat([res,site_res],axis=0)
     if not save_pf_config:
-        res = res.drop(columns=["lcoh_pf_config"])
+        drop_cols = [c for c in res.columns.to_list() if "pf_config" in c]
+        res = res.drop(columns=drop_cols)
     dump_data_to_pickle(res,output_filepath)
 start_time = datetime.now()
 
