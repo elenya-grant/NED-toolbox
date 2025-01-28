@@ -9,7 +9,8 @@ def convert_pf_res_to_pf_config(pf_config):
     new_params = {}
     params = pf_config['params']
     for i in params:
-        new_params.update({i:params[i]})
+        if i!="fraction of year operated":
+            new_params.update({i:params[i]})
     pf_config_new.update({"params":new_params})
     
     if 'feedstocks' in config_keys:
@@ -43,6 +44,11 @@ def convert_pf_res_to_pf_config(pf_config):
         incentives = {}
         for i in variables:
             vals = [i,variables[i].value,variables[i].decay,variables[i].sunset_years,variables[i].tax_credit]
+            if isinstance(variables[i].value,dict):
+                new_value = {int(y):v for y,v in variables[i].value.items()}
+                vals = [i,new_value,variables[i].decay,variables[i].sunset_years,variables[i].tax_credit]
+            else:
+                vals = [i,variables[i].value,variables[i].decay,variables[i].sunset_years,variables[i].tax_credit]
             incentives.update({i:dict(zip(incentive_keys,vals))})
-    pf_config_new.update({"incentives":incentives})
+        pf_config_new.update({"incentives":incentives})
     return pf_config_new
